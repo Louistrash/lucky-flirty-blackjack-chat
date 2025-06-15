@@ -559,7 +559,7 @@ const GamePage = () => {
       }));
 
       // Use OpenAI API directly
-      const openaiApiKey = "process.env.REACT_APP_OPENAI_API_KEY";
+      const openaiApiKey = process.env.REACT_APP_OPENAI_API_KEY;
       
       const personality_prompts = [
         "I am Emma, your sophisticated blackjack dealer with natural charm. I'm warm, professional, and subtly playful. I use gentle flirtation and encouragement. Keep responses under 12 words.",
@@ -835,7 +835,7 @@ const GamePage = () => {
       }));
 
       // Use OpenAI API directly
-      const openaiApiKey = "process.env.REACT_APP_OPENAI_API_KEY";
+      const openaiApiKey = process.env.REACT_APP_OPENAI_API_KEY;
       
       const personality_prompts = [
         "I am Emma, your sophisticated blackjack dealer with natural charm. I'm warm, professional, and subtly playful. I use gentle flirtation and encouragement. Keep responses under 12 words.",
