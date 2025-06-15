@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    restart: always
+    volumes:
+      # Mount the .env file for environment variables
+      - ./backend/.env:/app/.env
+      # Mount the Firebase credentials
+      - ./backend/flirty-chat-a045e-firebase-adminsdk-fbsvc-aa481051b6.json:/app/flirty-chat-a045e-firebase-adminsdk-fbsvc-aa481051b6.json
+    expose:
+      # Expose port 8000 to the internal Docker network
+      - "8000"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # This ensures the API calls inside the container go to the root path,
+        # where Nginx will catch and proxy them.
+        VITE_BACKEND_URL: /
+    restart: always
+    ports:
+      # Map port 8080 on the host to port 80 in the container
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge 
