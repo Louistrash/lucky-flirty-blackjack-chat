@@ -40,3 +40,10 @@ coverage.xml
 
 # Uvicorn
 *.log
+
+# Env
+*.env
+
+# Credentials
+*.json
+key.txt
