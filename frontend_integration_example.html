@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucky Flirty Chat - Betaling</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.2em;
+        }
+        
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .package-card {
+            border: 2px solid #f0f0f0;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .package-card:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.2);
+        }
+        
+        .package-card.popular {
+            border-color: #ff6b6b;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+            color: white;
+        }
+        
+        .package-card.popular::before {
+            content: "🔥 POPULAIR";
+            position: absolute;
+            top: 15px;
+            right: -30px;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 40px;
+            font-size: 12px;
+            font-weight: bold;
+            transform: rotate(45deg);
+        }
+        
+        .coin-package .package-title {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .popular .package-title {
+            color: white;
+        }
+        
+        .coin-amount {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+        }
+        
+        .popular .coin-amount {
+            color: white;
+        }
+        
+        .price {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0;
+        }
+        
+        .popular .price {
+            color: white;
+        }
+        
+        .original-price {
+            text-decoration: line-through;
+            color: #999;
+            font-size: 1.2em;
+            margin-right: 10px;
+        }
+        
+        .bonus {
+            background: #e8f5e8;
+            color: #2d8a2d;
+            padding: 10px 15px;
+            border-radius: 25px;
+            font-size: 14px;
+            margin: 15px 0;
+            display: inline-block;
+        }
+        
+        .popular .bonus {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        
+        .buy-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .buy-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .popular .buy-button {
+            background: linear-gradient(135deg, #fff 0%, #f8f8f8 100%);
+            color: #333;
+        }
+        
+        .premium-section {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            border-radius: 20px;
+            padding: 40px;
+            margin-top: 50px;
+        }
+        
+        .premium-title {
+            text-align: center;
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .premium-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        
+        .premium-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .premium-card h3 {
+            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .premium-price {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin: 20px 0;
+        }
+        
+        .premium-features {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+        
+        .premium-features li {
+            padding: 8px 0;
+            color: #666;
+        }
+        
+        .premium-features li::before {
+            content: "✅ ";
+            color: #4CAF50;
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .loading::after {
+            content: "Laden...";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .packages-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Lucky Flirty Chat - Coins & Premium</h1>
+            <p>Kies je favoriete pakket en start je avontuur!</p>
+        </div>
+        
+        <!-- Coin Packages -->
+        <div class="packages-grid">
+            <!-- Starter Pack -->
+            <div class="package-card coin-package">
+                <div class="package-title">Starter Pack</div>
+                <div class="coin-amount">500 💎</div>
+                <div class="price">€5,00</div>
+                <div class="bonus">Perfect om te beginnen</div>
+                <button class="buy-button" onclick="buyCoins('starter')">
+                    Koop Nu
+                </button>
+            </div>
+            
+            <!-- Popular Choice -->
+            <div class="package-card coin-package popular">
+                <div class="package-title">Popular Choice</div>
+                <div class="coin-amount">1.200 💎</div>
+                <div class="price">
+                    <span class="original-price">€12,00</span>
+                    €10,00
+                </div>
+                <div class="bonus">+20% Bonus Coins!</div>
+                <button class="buy-button" onclick="buyCoins('popular')">
+                    Koop Nu
+                </button>
+            </div>
+            
+            <!-- Value Bundle -->
+            <div class="package-card coin-package">
+                <div class="package-title">Value Bundle</div>
+                <div class="coin-amount">2.500 💎</div>
+                <div class="price">
+                    <span class="original-price">€25,00</span>
+                    €20,00
+                </div>
+                <div class="bonus">Best Value Per Coin</div>
+                <button class="buy-button" onclick="buyCoins('value')">
+                    Koop Nu
+                </button>
+            </div>
+            
+            <!-- Premium Stash -->
+            <div class="package-card coin-package">
+                <div class="package-title">Premium Stash</div>
+                <div class="coin-amount">6.500 💎</div>
+                <div class="price">
+                    <span class="original-price">€70,00</span>
+                    €50,00
+                </div>
+                <div class="bonus">Huge Bonus + VIP Tag</div>
+                <button class="buy-button" onclick="buyCoins('premium')">
+                    Koop Nu
+                </button>
+            </div>
+            
+            <!-- Whale Package -->
+            <div class="package-card coin-package">
+                <div class="package-title">Whale Package</div>
+                <div class="coin-amount">15.000 💎</div>
+                <div class="price">
+                    <span class="original-price">€150,00</span>
+                    €100,00
+                </div>
+                <div class="bonus">The Ultimate Experience</div>
+                <button class="buy-button" onclick="buyCoins('whale')">
+                    Koop Nu
+                </button>
+            </div>
+        </div>
+        
+        <!-- Premium Subscriptions -->
+        <div class="premium-section">
+            <h2 class="premium-title">👑 Premium Abonnementen</h2>
+            <div class="premium-grid">
+                <!-- Monthly Premium -->
+                <div class="premium-card">
+                    <h3>Premium Maandelijks</h3>
+                    <div class="premium-price">€9,99<span style="font-size: 0.4em;">/maand</span></div>
+                    <ul class="premium-features">
+                        <li>Unlimited dealer chats</li>
+                        <li>Exclusive dealer outfits</li>
+                        <li>Priority customer support</li>
+                        <li>Daily bonus coins</li>
+                        <li>Special VIP status</li>
+                    </ul>
+                    <button class="buy-button" onclick="buyPremium('premium_monthly')">
+                        Start Premium
+                    </button>
+                </div>
+                
+                <!-- Yearly Premium -->
+                <div class="premium-card">
+                    <h3>Premium Jaarlijks</h3>
+                    <div class="premium-price">€99,99<span style="font-size: 0.4em;">/jaar</span></div>
+                    <ul class="premium-features">
+                        <li>Alle Premium voordelen</li>
+                        <li>2 maanden gratis</li>
+                        <li>Extra bonus coins</li>
+                        <li>Exclusive annual rewards</li>
+                        <li>Premium badge</li>
+                    </ul>
+                    <button class="buy-button" onclick="buyPremium('premium_yearly')">
+                        Start Premium Jaar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialiseer Stripe (vervang met je echte publishable key)
+        const stripe = Stripe('pk_test_your_publishable_key_here');
+        
+        // API endpoint van je backend
+        const API_BASE = 'https://api.adultsplaystore.com'; // Vervang met je echte API URL
+        
+        /**
+         * Koop coins functie
+         */
+        async function buyCoins(packageId) {
+            const button = event.target;
+            const card = button.closest('.package-card');
+            
+            // Toon loading state
+            button.textContent = 'Bezig...';
+            button.disabled = true;
+            card.classList.add('loading');
+            
+            try {
+                // Maak checkout sessie aan via backend
+                const response = await fetch(`${API_BASE}/create-checkout-session`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        package_id: packageId,
+                        package_type: 'coins',
+                        customer_email: getCurrentUserEmail(), // Implementeer deze functie
+                        user_id: getCurrentUserId(), // Implementeer deze functie
+                        success_url: `${window.location.origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+                        cancel_url: `${window.location.origin}/payment/cancel`
+                    })
+                });
+                
+                const session = await response.json();
+                
+                if (session.error) {
+                    throw new Error(session.error);
+                }
+                
+                // Redirect naar Stripe Checkout
+                const result = await stripe.redirectToCheckout({
+                    sessionId: session.id
+                });
+                
+                if (result.error) {
+                    throw new Error(result.error.message);
+                }
+                
+            } catch (error) {
+                console.error('Fout bij betaling:', error);
+                alert('Er is een fout opgetreden bij de betaling. Probeer het opnieuw.');
+            } finally {
+                // Reset button state
+                button.textContent = 'Koop Nu';
+                button.disabled = false;
+                card.classList.remove('loading');
+            }
+        }
+        
+        /**
+         * Koop premium functie
+         */
+        async function buyPremium(packageId) {
+            const button = event.target;
+            const card = button.closest('.premium-card');
+            
+            // Toon loading state
+            button.textContent = 'Bezig...';
+            button.disabled = true;
+            card.classList.add('loading');
+            
+            try {
+                // Bepaal package type
+                const packageType = packageId === 'premium_monthly' ? 'premium_monthly' : 'premium_yearly';
+                
+                // Maak checkout sessie aan via backend
+                const response = await fetch(`${API_BASE}/create-checkout-session`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        package_id: packageId,
+                        package_type: packageType,
+                        customer_email: getCurrentUserEmail(),
+                        user_id: getCurrentUserId(),
+                        success_url: `${window.location.origin}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+                        cancel_url: `${window.location.origin}/payment/cancel`
+                    })
+                });
+                
+                const session = await response.json();
+                
+                if (session.error) {
+                    throw new Error(session.error);
+                }
+                
+                // Redirect naar Stripe Checkout
+                const result = await stripe.redirectToCheckout({
+                    sessionId: session.id
+                });
+                
+                if (result.error) {
+                    throw new Error(result.error.message);
+                }
+                
+            } catch (error) {
+                console.error('Fout bij premium betaling:', error);
+                alert('Er is een fout opgetreden bij de betaling. Probeer het opnieuw.');
+            } finally {
+                // Reset button state
+                const originalText = packageId === 'premium_monthly' ? 'Start Premium' : 'Start Premium Jaar';
+                button.textContent = originalText;
+                button.disabled = false;
+                card.classList.remove('loading');
+            }
+        }
+        
+        /**
+         * Hulpfuncties - implementeer deze volgens je app
+         */
+        function getCurrentUserEmail() {
+            // Implementeer logic om huidige gebruiker email te krijgen
+            return 'user@adultsplaystore.com'; // Placeholder
+        }
+        
+        function getCurrentUserId() {
+            // Implementeer logic om huidige gebruiker ID te krijgen
+            return 'user_123'; // Placeholder
+        }
+        
+        /**
+         * URL parameter handler voor success/cancel pagina's
+         */
+        function handlePaymentResult() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sessionId = urlParams.get('session_id');
+            
+            if (sessionId && window.location.pathname.includes('/payment/success')) {
+                // Handel succesvolle betaling af
+                showSuccessMessage();
+                
+                // Optioneel: Verifieer de betaling via backend
+                verifyPayment(sessionId);
+            }
+        }
+        
+        function showSuccessMessage() {
+            alert('Betaling succesvol! Je coins/premium zijn toegevoegd aan je account.');
+        }
+        
+        async function verifyPayment(sessionId) {
+            try {
+                const response = await fetch(`${API_BASE}/verify-payment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ session_id: sessionId })
+                });
+                
+                const result = await response.json();
+                console.log('Payment verification:', result);
+                
+            } catch (error) {
+                console.error('Fout bij payment verificatie:', error);
+            }
+        }
+        
+        // Initialiseer wanneer pagina laadt
+        document.addEventListener('DOMContentLoaded', function() {
+            handlePaymentResult();
+        });
+    </script>
+</body>
+</html> 

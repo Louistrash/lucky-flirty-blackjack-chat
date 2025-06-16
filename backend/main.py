@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from stripe_service import StripeService, PackageType
 import stripe
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 # Import Firebase configuration FIRST to set up credentials
 try:
@@ -22,7 +22,7 @@ class ChatMessageInput(BaseModel):
 class AiChatRequest(BaseModel):
     message: str
     history: List[ChatMessageInput]
-    outfit_stage_index: int = None
+    outfit_stage_index: Optional[int] = None
 
 class AiChatResponse(BaseModel):
     reply: str
@@ -33,10 +33,12 @@ def get_openai_client():
     try:
         from openai import OpenAI
         api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise ValueError("OPENAI_API_KEY environment variable not set")
+        if not api_key or api_key == "sk-your-openai-api-key-here":
+            print("⚠️ OpenAI API key not configured properly")
+            raise ValueError("OPENAI_API_KEY environment variable not set or using placeholder")
         return OpenAI(api_key=api_key)
     except ImportError:
+        print("❌ OpenAI library not installed. Run: pip install openai")
         raise ValueError("OpenAI library not installed")
 
 def import_api_routers() -> APIRouter:
@@ -272,14 +274,14 @@ def create_app() -> FastAPI:
             # Add current message
             messages.append({"role": "user", "content": request.message})
             
-            # Personality prompts based on outfit stage
+            # Personality prompts based on outfit stage - ALL IN ENGLISH as default
             personality_prompts = [
-                "Ik ben een professionele blackjack dealer met natuurlijke charme. Ik ben warm, professioneel en subtiel speels. Ik gebruik zachte flirtatie en aanmoediging. Houd antwoorden onder de 15 woorden.",
-                "Ik ben een elegante blackjack dealer in cocktailkleding. Ik ben charmant, geestig en iets intiemer. Ik complimenteer je beslissingen en creëer romantische spanning. Houd antwoorden onder de 15 woorden.",
-                "Ik ben een casual maar stijlvolle blackjack dealer. Ik ben benaderbaar, leuk en flirterig bemoedigend. Ik plaag speels over je geluk en vaardigheden. Houd antwoorden onder de 15 woorden.",
-                "Ik ben een sportieve, zelfverzekerde blackjack dealer. Ik ben energiek, gedurfd en zelfverzekerd flirterig. Ik vier je overwinningen met enthousiasme. Houd antwoorden onder de 15 woorden.",
-                "Ik ben een prachtige blackjack dealer in zwembadkleding. Ik ben zelfverzekerd, verleidelijk en speels verleidelijk. Ik gebruik sensuele complimenten. Houd antwoorden onder de 15 woorden.",
-                "Ik ben een luxueuze, boeiende blackjack dealer. Ik ben verfijnd, mysterieus en onweerstaanbaar charmant. Ik fluister zoete aanmoedigingen. Houd antwoorden onder de 15 woorden."
+                "I am a professional blackjack dealer with natural charm. I am warm, professional and subtly playful. I use gentle flirtation and encouragement. Keep responses under 15 words.",
+                "I am an elegant blackjack dealer in cocktail attire. I am charming, witty and more intimate. I compliment your decisions and create romantic tension. Keep responses under 15 words.",
+                "I am a casual but stylish blackjack dealer. I am approachable, fun and flirtatiously encouraging. I playfully tease about your luck and skills. Keep responses under 15 words.",
+                "I am a sporty, confident blackjack dealer. I am energetic, bold and confidently flirtatious. I celebrate your wins with enthusiasm. Keep responses under 15 words.",
+                "I am a beautiful blackjack dealer in swimwear. I am confident, seductive and playfully enticing. I use sensual compliments. Keep responses under 15 words.",
+                "I am a luxurious, captivating blackjack dealer. I am refined, mysterious and irresistibly charming. I whisper sweet encouragements. Keep responses under 15 words."
             ]
             
             outfit_stage = request.outfit_stage_index or 0
@@ -288,8 +290,12 @@ def create_app() -> FastAPI:
                 
             system_prompt = personality_prompts[outfit_stage]
             
+            # Detect language from recent messages and respond accordingly
+            # Default to English, but detect if user speaks Dutch, German, etc.
+            language_instruction = " IMPORTANT: Default to English responses. If you detect the user is speaking Dutch, respond in Dutch. If German, respond in German. If unclear or mixed languages, use English."
+            
             # Add system prompt
-            messages.insert(0, {"role": "system", "content": system_prompt + " Reageer in het Nederlands als de speler Nederlands spreekt, anders in het Engels."})
+            messages.insert(0, {"role": "system", "content": system_prompt + language_instruction})
             
             # Get AI response
             response = client.chat.completions.create(
@@ -305,12 +311,12 @@ def create_app() -> FastAPI:
         except ValueError as e:
             # Return helpful message when OpenAI is not configured
             return AiChatResponse(
-                reply="AI chat is niet geconfigureerd. Voeg OPENAI_API_KEY toe aan je environment variables."
+                reply="AI chat is not configured. Please add OPENAI_API_KEY to your environment variables."
             )
         except Exception as e:
             print(f"AI Chat error: {e}")
             return AiChatResponse(
-                reply="Er is een fout opgetreden bij het verwerken van je bericht."
+                reply="An error occurred while processing your message. Please try again."
             )
 
     # Lokalisatie endpoints

@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow users to create their own user document during onboarding
+    match /users/{userId} {
+      allow read, write: if request.auth != null && (
+        request.auth.uid == userId || 
+        // Allow creation during onboarding
+        (request.method == 'create' && request.auth.uid == userId)
+      );
+    }
+    
+    // Admin access for admin users only
+    match /admins/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid in get(/databases/$(database)/documents/admins/admin_list).data.uids;
+    }
+    
+    // Dealers - read for authenticated users, write for admins
+    match /dealers/{dealerId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (
+        request.auth.uid in get(/databases/$(database)/documents/admins/admin_list).data.uids ||
+        // Allow during development (remove in production)
+        true
+      );
+    }
+    
+    // Chat sessions - users can read/write their own sessions
+    match /chat_sessions/{sessionId} {
+      allow read, write: if request.auth != null && (
+        request.auth.uid == resource.data.userId ||
+        request.auth.uid == resource.data.user_id ||
+        // Allow creation
+        (request.method == 'create' && request.auth.uid != null)
+      );
+    }
+
+    // User profiles collection for onboarding and premium features
+    match /userProfiles/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Player data - only user's own data
+    match /playerData/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Allow read/write for any other authenticated access temporarily
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

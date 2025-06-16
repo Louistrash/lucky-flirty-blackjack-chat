@@ -294,8 +294,7 @@ const GamePage = () => {
         content: msg.text
       }));
 
-             // Use OpenAI API directly for now
-       const openaiApiKey = process.env.REACT_APP_OPENAI_API_KEY;
+             // Use backend API for AI chat
       
       const personality_prompts = [
         // Stage 0: Sophisticated & Sweet
@@ -335,23 +334,21 @@ const GamePage = () => {
       // Wait longer to show thinking animation - more realistic
       await new Promise(resolve => setTimeout(resolve, 1800 + Math.random() * 1200));
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch('/api/ai-chat/send-message', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: messages,
-          temperature: 0.7,
-          max_tokens: 50 // Reduced from 150 to make responses 40% shorter
+          message: prompt + ` Current game context: ${gameContext}`,
+          history: chatHistory,
+          outfit_stage_index: currentOutfitStage
         })
       });
 
       if (response.ok) {
         const data = await response.json();
-        replaceThinkingWithMessage(thinkingId, data.choices[0].message.content);
+        replaceThinkingWithMessage(thinkingId, data.reply);
       } else {
         replaceThinkingWithMessage(thinkingId, "Hmm, let me think... 🤔");
       }
@@ -593,23 +590,21 @@ const GamePage = () => {
       // Wait longer to show thinking animation - more realistic for chat
       await new Promise(resolve => setTimeout(resolve, 2200 + Math.random() * 1300));
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch(`${__API_URL__}/ai-chat/send-message`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: messages,
-          temperature: 0.7,
-          max_tokens: 50 // Reduced for shorter responses
+          message: userInput + ` (Game context: ${gameContext})`,
+          history: chatHistory,
+          outfit_stage_index: currentOutfitStage
         })
       });
 
       if (response.ok) {
         const data = await response.json();
-        replaceThinkingWithMessage(thinkingId, data.choices[0].message.content);
+        replaceThinkingWithMessage(thinkingId, data.reply);
       } else {
         replaceThinkingWithMessage(thinkingId, "Sorry, let me try again! 😊");
       }
@@ -869,23 +864,21 @@ const GamePage = () => {
       // Wait longer to show thinking animation - more realistic for conversation starters
       await new Promise(resolve => setTimeout(resolve, 2400 + Math.random() * 1400));
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      const response = await fetch('/api/ai-chat/send-message', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: messages,
-          temperature: 0.7,
-          max_tokens: 50 // Reduced for shorter responses
+          message: starter + ` (Game context: ${gameContext})`,
+          history: chatHistory,
+          outfit_stage_index: currentOutfitStage
         })
       });
 
       if (response.ok) {
         const data = await response.json();
-        replaceThinkingWithMessage(thinkingId, data.choices[0].message.content);
+        replaceThinkingWithMessage(thinkingId, data.reply);
       } else {
         replaceThinkingWithMessage(thinkingId, "Sorry, let me try again! 😊");
       }

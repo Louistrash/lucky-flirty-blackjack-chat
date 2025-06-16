@@ -1,0 +1,27 @@
+# 🎯 adultsplaystore.com Website Upload
+
+## ✅ COMPLETE WEBSITE BESTANDEN
+Deze zip bevat ALLE bestanden voor www.adultsplaystore.com:
+
+- index.html (hoofdpagina)
+- assets/ (alle JS/CSS bestanden - 25 bestanden)  
+- demodealers/ (9 dealer afbeeldingen: 1.webp t/m 9.webp)
+- locales/ (meertalig: NL/EN/DE)
+- .htaccess (Apache configuratie)
+- logo en achtergronden
+
+## 📦 Upload Instructies:
+1. Pak deze zip uit
+2. Upload ALLE bestanden naar je domain root (public_html/)
+3. Controleer dat index.html in de root staat
+4. Controleer dat demodealers/ 9 bestanden bevat
+
+## 🎮 Features:
+✅ Mobile portrait mode geoptimaliseerd
+✅ Stripe betalingen geïntegreerd  
+✅ Blackjack game werkend
+✅ Chat functionaliteit
+✅ Multi-language (NL/EN/DE)
+✅ 9 Demo dealers
+
+## 🌐 Test: https://www.adultsplaystore.com/ 

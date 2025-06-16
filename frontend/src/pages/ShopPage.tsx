@@ -1,12 +1,75 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppHeader } from '../components/AppHeader';
 import { usePlayerProgressStore } from '../utils/usePlayerProgressStore';
+import { PaymentService, type CoinPackage, type PremiumPackage } from '../services/paymentService';
+import { useCurrentUser } from "app";
 
 const ShopPage: React.FC = () => {
   const navigate = useNavigate();
+  const { user: currentUser } = useCurrentUser();
   const { playerData } = usePlayerProgressStore();
   const playerBalance = playerData?.playerCoins ?? 0;
+
+  const [coinPackages, setCoinPackages] = useState<CoinPackage[]>([]);
+  const [premiumPackages, setPremiumPackages] = useState<PremiumPackage[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPackages = async () => {
+      try {
+        setIsLoading(true);
+        const { coin_packages, premium_packages } = await PaymentService.getPackages();
+        setCoinPackages(coin_packages);
+        setPremiumPackages(premium_packages);
+        setError(null);
+      } catch (err) {
+        setError("Failed to load packages. Please try again later.");
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPackages();
+  }, []);
+
+  const handlePurchase = async (packageId: string, packageType: 'coins' | 'premium_monthly' | 'premium_yearly') => {
+    if (!currentUser) {
+      alert("Please log in to make a purchase.");
+      navigate('/login');
+      return;
+    }
+
+    setIsProcessing(packageId);
+    try {
+      const response = await PaymentService.createCheckoutSession({
+        package_id: packageId,
+        package_type: packageType,
+        user_id: currentUser.uid,
+      });
+
+      if (response.checkout_url) {
+        PaymentService.redirectToCheckout(response.checkout_url);
+      } else {
+        throw new Error("No checkout URL received.");
+      }
+    } catch (err) {
+      alert(`Payment failed: ${err instanceof Error ? err.message : "Unknown error"}`);
+    } finally {
+      setIsProcessing(null);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="text-center p-10">Loading packages...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center p-10 text-red-500">{error}</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-green-800 to-emerald-900">
@@ -24,114 +87,37 @@ const ShopPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* Starter Pack */}
-          <div className="bg-slate-900/90 backdrop-blur-sm rounded-xl border border-amber-400/20 p-6 hover:border-amber-400/40 transition-all duration-200">
-            <div className="text-center">
-              <div className="text-3xl mb-4">🎯</div>
-              <h3 className="text-xl font-bold text-amber-400 mb-2">Starter Pack</h3>
-              <div className="text-3xl font-bold text-green-400 mb-2">500 💰</div>
-              <div className="text-2xl font-bold text-white mb-4">€5.00</div>
-              <p className="text-slate-400 text-sm mb-6">Perfect om te beginnen</p>
-              <button 
-                onClick={() => navigate('/profile')}
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-900 font-bold py-3 rounded-lg transition-all duration-200"
-              >
-                Kopen
-              </button>
+          {coinPackages.map((pkg) => (
+            <div 
+              key={pkg.id}
+              className={`bg-slate-900/90 backdrop-blur-sm rounded-xl border p-6 transition-all duration-200 ${
+                pkg.is_popular ? 'border-amber-400 shadow-amber-400/20 shadow-lg' : 'border-amber-400/20 hover:border-amber-400/40'
+              }`}
+            >
+              {pkg.is_popular && (
+                <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-amber-500 text-slate-900 px-3 py-1 rounded-full text-xs font-bold">
+                  MOST POPULAR
+                </div>
+              )}
+              <div className="text-center">
+                <div className="text-3xl mb-4">🎯</div>
+                <h3 className="text-xl font-bold text-amber-400 mb-2">{pkg.name}</h3>
+                <div className="text-3xl font-bold text-green-400 mb-2">{pkg.coins} 💰</div>
+                <div className="text-2xl font-bold text-white mb-1">{PaymentService.formatPrice(pkg.price_eur)}</div>
+                {pkg.original_price_eur && (
+                   <div className="text-sm text-slate-400 line-through mb-4">{PaymentService.formatPrice(pkg.original_price_eur)}</div>
+                )}
+                <p className="text-slate-400 text-sm mb-6">{pkg.bonus_description || ' '}</p>
+                <button 
+                  onClick={() => handlePurchase(pkg.id, 'coins')}
+                  disabled={isProcessing === pkg.id}
+                  className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-900 font-bold py-3 rounded-lg transition-all duration-200 disabled:opacity-50"
+                >
+                  {isProcessing === pkg.id ? 'Processing...' : 'Kopen'}
+                </button>
+              </div>
             </div>
-          </div>
-
-          {/* Popular Choice */}
-          <div className="bg-slate-900/90 backdrop-blur-sm rounded-xl border border-amber-400 p-6 relative shadow-amber-400/20 shadow-lg">
-            <div className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-amber-500 text-slate-900 px-3 py-1 rounded-full text-xs font-bold">
-              MOST POPULAR
-            </div>
-            <div className="text-center">
-              <div className="text-3xl mb-4">🔥</div>
-              <h3 className="text-xl font-bold text-amber-400 mb-2">Popular Choice</h3>
-              <div className="text-3xl font-bold text-green-400 mb-2">1200 💰</div>
-              <div className="text-2xl font-bold text-white mb-1">€10.00</div>
-              <div className="text-sm text-slate-400 line-through mb-4">€12.00</div>
-              <p className="text-slate-400 text-sm mb-6">+200 bonus coins</p>
-              <button 
-                onClick={() => navigate('/profile')}
-                className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-900 font-bold py-3 rounded-lg transition-all duration-200"
-              >
-                Kopen
-              </button>
-            </div>
-          </div>
-
-          {/* Best Value */}
-          <div className="bg-slate-900/90 backdrop-blur-sm rounded-xl border border-amber-400/20 p-6 hover:border-amber-400/40 transition-all duration-200">
-            <div className="text-center">
-              <div className="text-3xl mb-4">💎</div>
-              <h3 className="text-xl font-bold text-amber-400 mb-2">Best Value</h3>
-              <div className="text-3xl font-bold text-green-400 mb-2">2500 💰</div>
-              <div className="text-2xl font-bold text-white mb-1">€20.00</div>
-              <div className="text-sm text-slate-400 line-through mb-4">€25.00</div>
-              <p className="text-slate-400 text-sm mb-6">+500 bonus coins</p>
-              <button 
-                onClick={() => navigate('/profile')}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3 rounded-lg transition-all duration-200"
-              >
-                Kopen
-              </button>
-            </div>
-          </div>
-
-          {/* Mega Pack */}
-          <div className="bg-slate-900/90 backdrop-blur-sm rounded-xl border border-amber-400/20 p-6 hover:border-amber-400/40 transition-all duration-200">
-            <div className="text-center">
-              <div className="text-3xl mb-4">🚀</div>
-              <h3 className="text-xl font-bold text-amber-400 mb-2">Mega Pack</h3>
-              <div className="text-3xl font-bold text-green-400 mb-2">5000 💰</div>
-              <div className="text-2xl font-bold text-white mb-1">€35.00</div>
-              <div className="text-sm text-slate-400 line-through mb-4">€50.00</div>
-              <p className="text-slate-400 text-sm mb-6">+1000 bonus coins</p>
-              <button 
-                onClick={() => navigate('/profile')}
-                className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-500 hover:to-teal-500 text-white font-bold py-3 rounded-lg transition-all duration-200"
-              >
-                Kopen
-              </button>
-            </div>
-          </div>
-
-          {/* Ultimate */}
-          <div className="bg-slate-900/90 backdrop-blur-sm rounded-xl border border-amber-400/20 p-6 hover:border-amber-400/40 transition-all duration-200">
-            <div className="text-center">
-              <div className="text-3xl mb-4">👑</div>
-              <h3 className="text-xl font-bold text-amber-400 mb-2">Ultimate</h3>
-              <div className="text-3xl font-bold text-green-400 mb-2">10000 💰</div>
-              <div className="text-2xl font-bold text-white mb-1">€60.00</div>
-              <div className="text-sm text-slate-400 line-through mb-4">€100.00</div>
-              <p className="text-slate-400 text-sm mb-6">+2000 bonus coins</p>
-              <button 
-                onClick={() => navigate('/profile')}
-                className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3 rounded-lg transition-all duration-200"
-              >
-                Kopen
-              </button>
-            </div>
-          </div>
-
-          {/* Free Daily Bonus */}
-          <div className="bg-slate-900/90 backdrop-blur-sm rounded-xl border border-green-400/20 p-6 hover:border-green-400/40 transition-all duration-200">
-            <div className="text-center">
-              <div className="text-3xl mb-4">🎁</div>
-              <h3 className="text-xl font-bold text-green-400 mb-2">Daily Bonus</h3>
-              <div className="text-3xl font-bold text-green-400 mb-2">100 💰</div>
-              <div className="text-2xl font-bold text-green-400 mb-4">GRATIS</div>
-              <p className="text-slate-400 text-sm mb-6">Iedere 24 uur beschikbaar</p>
-              <button 
-                onClick={() => alert('Daily bonus claimed! +100 coins')}
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold py-3 rounded-lg transition-all duration-200"
-              >
-                Claim Bonus
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Info Banner */}

@@ -1,0 +1,12 @@
+specVersion: "v1"
+serviceId: "lucky-flirty-chat"
+location: "europe-central2"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "fdcdb"
+      cloudSql:
+        instanceId: "lucky-flirty-chat-fdc"
+      # schemaValidation: "COMPATIBLE"
+connectorDirs: ["./connector"]

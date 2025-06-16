@@ -1,0 +1,50 @@
+🔗 CHECKOUT TEST URLS
+========================================
+
+Starter Pack
+Price: €5.0
+Coins: 500
+URL: https://checkout.stripe.com/c/pay/cs_test_a1jJtpTSIYLuFE3lLrlWzANytTOfGltevoEmNnsLhaZLst2jIMZSRLK4vG#fidkdWxOYHwnPyd1blpxYHZxWjA0V11PbkxMbVxzaEtBXTZIZHFEdk02fVdKMVUyUXFzUGcySjVVT3ZnS3FHa2lRUElrR3dDc1FrVHJgSFVzYH0zQjZqQ2FQS3RsbkhyckdPazdyXFBxVn01NTV9XXU3S3A8NycpJ2N3amhWYHdzYHcnP3F3cGApJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl
+Session: cs_test_a1jJtpTSIYLuFE3lLrlWzANytTOfGltevoEmNnsLhaZLst2jIMZSRLK4vG
+----------------------------------------
+
+Popular Choice
+Price: €10.0
+Coins: 1200
+URL: https://checkout.stripe.com/c/pay/cs_test_a1A77tMAike0KWma7EHquT5JhG1QVXb9XIUbPMhE0h1dVC5JOS5OgUatNe#fidkdWxOYHwnPyd1blpxYHZxWjA0V11PbkxMbVxzaEtBXTZIZHFEdk02fVdKMVUyUXFzUGcySjVVT3ZnS3FHa2lRUElrR3dDc1FrVHJgSFVzYH0zQjZqQ2FQS3RsbkhyckdPazdyXFBxVn01NTV9XXU3S3A8NycpJ2N3amhWYHdzYHcnP3F3cGApJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl
+Session: cs_test_a1A77tMAike0KWma7EHquT5JhG1QVXb9XIUbPMhE0h1dVC5JOS5OgUatNe
+----------------------------------------
+
+Value Bundle
+Price: €20.0
+Coins: 2500
+URL: https://checkout.stripe.com/c/pay/cs_test_a18dTBtRhmAMK0BLvIMweVfyKLp9KILOPlcgWeqq2YclTetxBBOo9nXI8Z#fidkdWxOYHwnPyd1blpxYHZxWjA0V11PbkxMbVxzaEtBXTZIZHFEdk02fVdKMVUyUXFzUGcySjVVT3ZnS3FHa2lRUElrR3dDc1FrVHJgSFVzYH0zQjZqQ2FQS3RsbkhyckdPazdyXFBxVn01NTV9XXU3S3A8NycpJ2N3amhWYHdzYHcnP3F3cGApJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl
+Session: cs_test_a18dTBtRhmAMK0BLvIMweVfyKLp9KILOPlcgWeqq2YclTetxBBOo9nXI8Z
+----------------------------------------
+
+Premium Pack
+Price: €50.0
+Coins: 6500
+URL: https://checkout.stripe.com/c/pay/cs_test_a1v4qQy1Z8eSmrUoFFzdUd9hcsslIwQGtePpIRYM3nWjebyarMnINvFXtJ#fidkdWxOYHwnPyd1blpxYHZxWjA0V11PbkxMbVxzaEtBXTZIZHFEdk02fVdKMVUyUXFzUGcySjVVT3ZnS3FHa2lRUElrR3dDc1FrVHJgSFVzYH0zQjZqQ2FQS3RsbkhyckdPazdyXFBxVn01NTV9XXU3S3A8NycpJ2N3amhWYHdzYHcnP3F3cGApJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl
+Session: cs_test_a1v4qQy1Z8eSmrUoFFzdUd9hcsslIwQGtePpIRYM3nWjebyarMnINvFXtJ
+----------------------------------------
+
+Whale Package
+Price: €100.0
+Coins: 15000
+URL: https://checkout.stripe.com/c/pay/cs_test_a13MvSQ3Znv1zBg4SAqsrRbOqWDs0rq0KdiHwB17fDM1xwS0hg2aYEVHZM#fidkdWxOYHwnPyd1blpxYHZxWjA0V11PbkxMbVxzaEtBXTZIZHFEdk02fVdKMVUyUXFzUGcySjVVT3ZnS3FHa2lRUElrR3dDc1FrVHJgSFVzYH0zQjZqQ2FQS3RsbkhyckdPazdyXFBxVn01NTV9XXU3S3A8NycpJ2N3amhWYHdzYHcnP3F3cGApJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl
+Session: cs_test_a13MvSQ3Znv1zBg4SAqsrRbOqWDs0rq0KdiHwB17fDM1xwS0hg2aYEVHZM
+----------------------------------------
+
+Premium Monthly
+Price: €9.99
+URL: https://checkout.stripe.com/c/pay/cs_test_a1ltN1Y9RL7Kn3aPubpOLs6HQwZPPsdpBUNWg9ye0ztMCRUp2qD2UKmuh3#fidkdWxOYHwnPyd1blpxYHZxWjA0V11PbkxMbVxzaEtBXTZIZHFEdk02fVdKMVUyUXFzUGcySjVVT3ZnS3FHa2lRUElrR3dDc1FrVHJgSFVzYH0zQjZqQ2FQS3RsbkhyckdPazdyXFBxVn01NTV9XXU3S3A8NycpJ2N3amhWYHdzYHcnP3F3cGApJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl
+Session: cs_test_a1ltN1Y9RL7Kn3aPubpOLs6HQwZPPsdpBUNWg9ye0ztMCRUp2qD2UKmuh3
+----------------------------------------
+
+Premium Yearly
+Price: €99.99
+URL: https://checkout.stripe.com/c/pay/cs_test_a1wFr5i0keAHrOe7RFPGSEG4VTHw5yRLCKyhopDpaBj9p3grgXwc32zErs#fidkdWxOYHwnPyd1blpxYHZxWjA0V11PbkxMbVxzaEtBXTZIZHFEdk02fVdKMVUyUXFzUGcySjVVT3ZnS3FHa2lRUElrR3dDc1FrVHJgSFVzYH0zQjZqQ2FQS3RsbkhyckdPazdyXFBxVn01NTV9XXU3S3A8NycpJ2N3amhWYHdzYHcnP3F3cGApJ2lkfGpwcVF8dWAnPyd2bGtiaWBabHFgaCcpJ2BrZGdpYFVpZGZgbWppYWB3dic%2FcXdwYHgl
+Session: cs_test_a1wFr5i0keAHrOe7RFPGSEG4VTHw5yRLCKyhopDpaBj9p3grgXwc32zErs
+----------------------------------------
+

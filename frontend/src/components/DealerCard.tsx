@@ -83,7 +83,7 @@ export const DealerCard = ({ dealer, progress, onSelectDealer, index }: DealerCa
                 handleCardClick();
               }}
             >
-              {t('general.play')}
+              {t('play')}
             </Button>
         </div>
       </div>
