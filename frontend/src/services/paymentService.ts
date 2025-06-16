@@ -64,13 +64,16 @@ export class PaymentService {
     
     const data = await response.json();
     
+    // Check if the response has a success field and extract the data
+    const responseData = data.success ? data : { coin_packages: data.coin_packages || [], premium_packages: data.premium_packages || [] };
+    
     // Transform data to match our interface
     return {
-      coin_packages: data.coin_packages.map((pkg: any) => ({
+      coin_packages: responseData.coin_packages.map((pkg: any) => ({
         ...pkg,
         type: 'coins' as const
       })),
-      premium_packages: data.premium_packages.map((pkg: any) => ({
+      premium_packages: responseData.premium_packages.map((pkg: any) => ({
         ...pkg,
         type: 'premium' as const
       }))
