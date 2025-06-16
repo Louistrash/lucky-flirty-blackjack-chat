@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import brain from 'brain';
 import { AiChatRequest, ChatMessageInput as BrainChatMessageInput } from 'types'; // Adjust path if brain types are elsewhere
 import { useCurrentUser } from 'app';
 import { usePlayerProgressStore } from '../utils/usePlayerProgressStore';
@@ -183,7 +182,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = (/* { dealerProfile } */) =>
       outfit_stage_index: currentOutfitStage,
     };
 
-    brain.send_chat_message(requestBody)
+    fetch('/api/ai-chat/send-message', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody)
+    })
       .then(async response => {
         if (!response.ok) {
           throw new Error(`API Error: ${response.status}`);
