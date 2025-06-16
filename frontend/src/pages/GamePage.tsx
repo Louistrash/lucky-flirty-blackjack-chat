@@ -590,7 +590,7 @@ const GamePage = () => {
       // Wait longer to show thinking animation - more realistic for chat
       await new Promise(resolve => setTimeout(resolve, 2200 + Math.random() * 1300));
 
-      const response = await fetch(`${__API_URL__}/ai-chat/send-message`, {
+      const response = await fetch(`${__API_URL__}/api/ai-chat/send-message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

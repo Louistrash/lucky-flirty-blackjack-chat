@@ -46,7 +46,6 @@ export interface Subscription {
 }
 
 const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 
 // Initialize Stripe
 const stripePromise = loadStripe(STRIPE_PUBLIC_KEY);
@@ -57,7 +56,7 @@ export class PaymentService {
    * Haal alle beschikbare pakketten op
    */
   static async getPackages(): Promise<PaymentPackages> {
-    const response = await fetch(`${API_BASE_URL}/api/packages`);
+    const response = await fetch(`${__API_URL__}/api/packages`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch packages');
@@ -83,7 +82,7 @@ export class PaymentService {
    */
   static async createCheckoutSession(request: CheckoutRequest) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/create-checkout-session`, {
+      const response = await fetch(`${__API_URL__}/api/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -113,7 +112,7 @@ export class PaymentService {
    * Haal gebruiker abonnementen op
    */
   static async getUserSubscriptions(userEmail: string): Promise<Subscription[]> {
-    const response = await fetch(`${API_BASE_URL}/payments/subscriptions/${encodeURIComponent(userEmail)}`);
+    const response = await fetch(`${__API_URL__}/payments/subscriptions/${encodeURIComponent(userEmail)}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch subscriptions');
@@ -127,7 +126,7 @@ export class PaymentService {
    * Setup Stripe producten (admin only)
    */
   static async setupStripeProducts(): Promise<{ message: string }> {
-    const response = await fetch(`${API_BASE_URL}/setup-stripe`, {
+    const response = await fetch(`${__API_URL__}/setup-stripe`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
