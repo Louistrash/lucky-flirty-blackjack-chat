@@ -72,15 +72,27 @@ const ShopPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-900 via-green-800 to-emerald-900">
-      <AppHeader 
-        title="Token Shop" 
-        showBackButton={true} 
-        backTo="/"
-        playerBalance={playerBalance} 
-      />
+    <div 
+      className="min-h-screen bg-gradient-to-br from-emerald-900 via-green-800 to-emerald-900 relative"
+      style={{
+        backgroundImage: 'url("/casino-pattern.png")',
+        backgroundSize: '400px 400px',
+        backgroundRepeat: 'repeat',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      {/* Overlay voor betere leesbaarheid */}
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/80 via-green-800/80 to-emerald-900/80"></div>
       
-      <div className="container mx-auto px-6 py-8 max-w-6xl">
+      <div className="relative z-10">
+        <AppHeader 
+          title="Token Shop" 
+          showBackButton={true} 
+          backTo="/"
+          playerBalance={playerBalance} 
+        />
+        
+        <div className="container mx-auto px-6 py-8 max-w-6xl">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-amber-400 mb-4">🛒 Token Shop</h1>
           <p className="text-slate-300">Koop tokens om je casino ervaring te verbeteren!</p>
@@ -90,8 +102,8 @@ const ShopPage: React.FC = () => {
           {coinPackages.map((pkg) => (
             <div 
               key={pkg.id}
-              className={`bg-slate-900/90 backdrop-blur-sm rounded-xl border p-6 transition-all duration-200 ${
-                pkg.is_popular ? 'border-amber-400 shadow-amber-400/20 shadow-lg' : 'border-amber-400/20 hover:border-amber-400/40'
+              className={`bg-slate-900/95 backdrop-blur-md rounded-xl border p-6 transition-all duration-200 shadow-2xl hover:shadow-3xl ${
+                pkg.is_popular ? 'border-amber-400 shadow-amber-400/30 shadow-2xl ring-2 ring-amber-400/20' : 'border-amber-400/30 hover:border-amber-400/50 hover:shadow-amber-400/10'
               }`}
             >
               {pkg.is_popular && (
@@ -121,7 +133,7 @@ const ShopPage: React.FC = () => {
         </div>
 
         {/* Info Banner */}
-        <div className="mt-12 bg-blue-900/20 border border-blue-400/30 rounded-xl p-6 text-center">
+        <div className="mt-12 bg-blue-900/30 backdrop-blur-md border border-blue-400/40 rounded-xl p-6 text-center shadow-2xl">
           <div className="flex items-center justify-center gap-3 mb-4">
             <span className="text-3xl">ℹ️</span>
             <h3 className="text-xl font-bold text-blue-400">Betalingsinformatie</h3>
@@ -135,6 +147,7 @@ const ShopPage: React.FC = () => {
             <span>💰 PayPal</span>
             <span>🔒 SSL Beveiligd</span>
           </div>
+        </div>
         </div>
       </div>
     </div>
