@@ -230,3 +230,12 @@ firebase_options.py
 
 # macOS
 .DS_Store
+
+# Production deployment files
+assets/
+index.html
+*.png
+*.jpg
+*.svg
+demodealers/
+locales/
