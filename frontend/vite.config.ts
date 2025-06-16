@@ -33,8 +33,8 @@ console.log("🚀 Using clean Firebase config:", firebaseConfig);
 export default defineConfig(({ mode }) => {
 	// Production URLs voor adultsplaystore.com
 	const isProduction = mode === 'production';
-	const apiUrl = isProduction ? "https://www.adultsplaystore.com/api" : "http://localhost:8000";
-	const wsUrl = isProduction ? "wss://www.adultsplaystore.com/api" : "ws://localhost:8000";
+	const apiUrl = isProduction ? "https://www.adultsplaystore.com" : "http://localhost:8000";
+	const wsUrl = isProduction ? "wss://www.adultsplaystore.com" : "ws://localhost:8000";
 	
 	return {
 		define: {
