@@ -1,0 +1,82 @@
+{
+  "general": {
+    "appName": "Lucky Flirty Chat",
+    "play": "Jetzt Spielen",
+    "loading": "Lädt...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "create": "Erstellen",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "back": "Zurück",
+    "next": "Weiter"
+  },
+  "header": {
+    "home": "Startseite",
+    "dealerManagement": "Dealer-Verwaltung",
+    "admin": "Admin",
+    "logout": "Abmelden",
+    "login": "Anmelden",
+    "language": "Sprache"
+  },
+  "home": {
+    "chooseDealer": "Wählen Sie Ihren Dealer",
+    "dealerDescription": "Jeder Dealer hat einen einzigartigen Stil und Expertise.",
+    "experienceText": "Jahre Erfahrung",
+    "professionalText": "Professionell",
+    "dealerChat": "Live-Chat mit dem Dealer",
+    "carousel": {
+      "subtitle": "Erleben Sie den Nervenkitzel des authentischen Blackjacks mit unseren professionellen Live-Dealern.",
+      "dealerUnique": "Jeder Dealer bietet ein einzigartiges Erlebnis."
+    }
+  },
+  "dealerManagement": {
+    "title": "Dealer-Verwaltung",
+    "addDealer": "Neuen Dealer hinzufügen",
+    "editDealer": "Dealer bearbeiten",
+    "carouselTitle": "Homepage-Karussell (17 Plätze)",
+    "carouselDescription": "Diese 17 Dealer werden auf der Startseite angezeigt. Klicken Sie auf \"Bearbeiten\", um einen Dealer zu ändern.",
+    "slotsUsed": "Plätze verwendet",
+    "validations": {
+      "maxDealers": "Homepage-Karussell kann maximal 17 Dealer enthalten",
+      "alreadyInCarousel": "Dieser Dealer ist bereits im Homepage-Karussell",
+      "notSuitable": "Dealer nicht für Karussell geeignet"
+    }
+  },
+  "game": {
+    "hit": "Hit",
+    "stand": "Stand",
+    "double": "Doppeln",
+    "bet": "Setzen",
+    "deal": "Geben",
+    "yourTurn": "Ihr Zug",
+    "dealerTurn": "Dealer-Zug",
+    "youWin": "Sie gewinnen!",
+    "youLose": "Sie verlieren!",
+    "tie": "Unentschieden!",
+    "blackjack": "Blackjack!",
+    "insuranceQuestion": "Versicherung?",
+    "yes": "Ja",
+    "no": "Nein",
+    "bust": "Bust!",
+    "playerScore": "Ihr Punktestand",
+    "dealerScore": "Dealer-Punktestand"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "dealersTotal": "Dealer gesamt",
+    "dealersActive": "Aktive Dealer",
+    "dealersInCarousel": "Dealer im Karussell",
+    "usersTotal": "Benutzer gesamt",
+    "refreshTips": {
+      "title": "Aktualisierungstipps",
+      "instruction": "Wenn Dealer nicht erscheinen, versuchen Sie:",
+      "refreshCarousel": "Karussell aktualisieren",
+      "refreshDealers": "Dealer-Daten aktualisieren",
+      "clearCache": "Browser-Cache leeren",
+      "restart": "Anwendung neu starten"
+    }
+  }
+}
