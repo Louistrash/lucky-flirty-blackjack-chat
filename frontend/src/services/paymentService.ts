@@ -45,7 +45,11 @@ export interface Subscription {
   plan_name: string;
 }
 
-const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+// Use a fallback key for development if environment variable is not set
+const STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_51OTBVbJDYzwGDuiJkNlrHCwGZGQfLhXQbMSVhZDYzwGDuiJkNlrHCwGZ';
+
+// Log the Stripe key for debugging (redacted for security)
+console.log(`Stripe key loaded: ${STRIPE_PUBLIC_KEY.substring(0, 8)}...`);
 
 // Initialize Stripe
 const stripePromise = loadStripe(STRIPE_PUBLIC_KEY);
@@ -56,7 +60,7 @@ export class PaymentService {
    * Haal alle beschikbare pakketten op
    */
   static async getPackages(): Promise<PaymentPackages> {
-    const response = await fetch(`${__API_URL__}/api/packages`);
+    const response = await fetch(`${__API_URL__}/api/payments/packages`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch packages');
@@ -85,7 +89,16 @@ export class PaymentService {
    */
   static async createCheckoutSession(request: CheckoutRequest) {
     try {
-      const response = await fetch(`${__API_URL__}/api/create-checkout-session`, {
+      console.log('Creating checkout session with request:', {
+        ...request,
+        user_id: request.user_id ? '(redacted)' : undefined // Don't log user ID
+      });
+      
+      // Ensure we have a valid API URL
+      const apiUrl = __API_URL__ || window.location.origin;
+      console.log(`Using API URL: ${apiUrl}`);
+      
+      const response = await fetch(`${apiUrl}/api/payments/create-checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -97,16 +110,30 @@ export class PaymentService {
           success_url: window.location.origin + '/payment/success?session_id={CHECKOUT_SESSION_ID}',
           cancel_url: window.location.origin + '/payment/cancel'
         }),
+        credentials: 'include', // Include cookies for authentication
       });
 
+      console.log('Checkout response status:', response.status);
+      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || 'Failed to create checkout session');
+        const errorText = await response.text();
+        let errorJson;
+        try {
+          errorJson = JSON.parse(errorText);
+          console.error('Payment API error:', errorJson);
+          throw new Error(errorJson.detail || `Failed to create checkout session: ${response.status}`);
+        } catch (e) {
+          console.error('Payment API returned non-JSON error:', errorText);
+          throw new Error(`Failed to create checkout session: ${response.status} - ${errorText.substring(0, 100)}...`);
+        }
       }
 
-      return await response.json();
+      const responseData = await response.json();
+      console.log('Checkout session created successfully');
+      return responseData;
     } catch (error) {
       console.error('Payment error:', error);
+      alert(`Payment error: ${error.message || 'Unknown error'}. Please try again later.`);
       throw error;
     }
   }
@@ -115,7 +142,7 @@ export class PaymentService {
    * Haal gebruiker abonnementen op
    */
   static async getUserSubscriptions(userEmail: string): Promise<Subscription[]> {
-    const response = await fetch(`${__API_URL__}/payments/subscriptions/${encodeURIComponent(userEmail)}`);
+    const response = await fetch(`${__API_URL__}/api/payments/subscriptions/${encodeURIComponent(userEmail)}`);
     
     if (!response.ok) {
       throw new Error('Failed to fetch subscriptions');
@@ -129,7 +156,7 @@ export class PaymentService {
    * Setup Stripe producten (admin only)
    */
   static async setupStripeProducts(): Promise<{ message: string }> {
-    const response = await fetch(`${__API_URL__}/setup-stripe`, {
+    const response = await fetch(`${__API_URL__}/api/setup-stripe`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -170,4 +197,4 @@ export class PaymentService {
     }
     return Math.round(((originalPrice - currentPrice) / originalPrice) * 100);
   }
-} 
+}

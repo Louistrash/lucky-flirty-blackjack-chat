@@ -9,6 +9,14 @@ import DealerProgressionDisplay from "../components/DealerProgressionDisplay";
 import SwipeableOutfitPreview from "../components/SwipeableOutfitPreview";
 import casinoPattern from '/casino-pattern.png'; // Import casino pattern
 import { AppHeader } from '../components/AppHeader';
+import { API_URL } from '../constants';
+import { useChatStore, Message } from '../utils/useChatStore';
+import { formatTimestamp } from '../utils/helpers';
+
+// Helper function to generate unique IDs (same as in useChatStore)
+const generateUniqueId = () => {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+};
 
 type GamePhase = "CARDS_DEALT" | "BETTING" | "PLAYER_TURN" | "DEALER_TURN" | "GAME_OVER";
 
@@ -17,6 +25,7 @@ interface ExtendedDealerData extends DealerData {
   experience?: string;
   winRate?: string;
   title?: string; // Voeg title toe voor de subtitel
+  avatar?: string; // Add avatar property
 }
 
 // Update de SwipeableOutfitPreview interface
@@ -30,6 +39,8 @@ interface SwipeableOutfitPreviewProps {
 }
 
 const GamePage = () => {
+  // Access chat store
+  const { messages: chatMessages } = useChatStore();
   const { dealerId } = useParams<{ dealerId: string }>();
   const navigate = useNavigate();
   const { user: currentUser } = useCurrentUser();
@@ -68,12 +79,6 @@ const GamePage = () => {
   const [showOutfitPreview, setShowOutfitPreview] = useState<boolean>(false);
 
   // Chat State
-  const [chatMessages, setChatMessages] = useState<Array<{
-    id: string;
-    text: string;
-    sender: 'player' | 'dealer' | 'thinking';
-    timestamp: Date;
-  }>>([]);
   const [chatInput, setChatInput] = useState<string>("");
   const [showEmoticonsPopup, setShowEmoticonsPopup] = useState<boolean>(false);
   const [showStartersPopup, setShowStartersPopup] = useState<boolean>(false);
@@ -86,14 +91,24 @@ const GamePage = () => {
   };
 
   // Helper to add chat message
-  const addChatMessage = (text: string, sender: 'player' | 'dealer' | 'thinking') => {
+  const addChatMessage = (text: string, sender: 'user' | 'dealer') => {
+    // Don't add empty messages
+    if (!text || text.trim() === '') {
+      console.log('Prevented empty message from being added');
+      return;
+    }
+    
+    // Use the chat store to add messages
+    const { addMessage } = useChatStore.getState();
     const newMessage = {
-      id: `${Date.now()}-${Math.random()}`,
+      id: generateUniqueId(), // Use our unique ID generator
       text,
       sender,
-      timestamp: new Date(),
+      timestamp: new Date().toISOString(), // Store as ISO string for consistency
+      avatar: sender === 'dealer' ? dealer?.avatarUrl : undefined // Fix avatar property name
     };
-    setChatMessages(prev => [...prev, newMessage]);
+    addMessage(newMessage);
+    return newMessage.id; // Return the ID for reference
   };
 
   // Effect to subscribe to player progress when currentUser is available
@@ -131,8 +146,15 @@ const GamePage = () => {
             };
             
             setDealer(extendedDealer);
-            // Clear previous messages, ready for the welcome sequence
-            setChatMessages([]);
+            
+            // Clear chat history when a new dealer is loaded
+            const { clearMessages } = useChatStore.getState();
+            clearMessages();
+            
+            // Reset game state
+            setPlayerHand([]);
+            setDealerHand([]);
+            setHasAutoDealt(false);
           } else {
             console.error(`❌ Dealer ${dealerId} not found in Firebase`);
             alert(`Dealer ${dealerId} niet gevonden. Ga terug naar de dealer selectie.`);
@@ -154,23 +176,57 @@ const GamePage = () => {
     // This effect runs when the dealer is loaded and the game hasn't started yet
     // Fixed duplication issue by checking if messages already exist
     if (dealer && !hasAutoDealt && chatMessages.length === 0) {
-      const thinkingId = addThinkingIndicator();
+      // Deal cards first and capture the initial hands
+      let newDeck = shuffleDeck(createDeck());
+      const initialPlayerHand: Card[] = [];
+      const initialDealerHand: Card[] = [];
       
-      // Deal cards first and set initial game state
+      // Deal 2 cards to player
+      initialPlayerHand.push(newDeck.pop()!);
+      initialPlayerHand.push(newDeck.pop()!);
+      
+      // Deal 2 cards to dealer (1 open, 1 face down)
+      const dealerCard1 = newDeck.pop()!;
+      const dealerCard2 = { ...newDeck.pop()!, isFaceDown: true };
+      initialDealerHand.push(dealerCard1);
+      initialDealerHand.push(dealerCard2);
+      
+      // Set the hands and update the game state
+      setPlayerHand(initialPlayerHand);
+      setDealerHand(initialDealerHand);
+      setDeck(newDeck);
+      
+      const initialPlayerScore = calculateScore(initialPlayerHand);
+      setPlayerScore(initialPlayerScore);
+      setDealerScore(calculateScore([dealerCard1])); // Only count visible card
+      
+      setGamePhase("BETTING");
+      setHasAutoDealt(true);
+      
+      // Short delay before showing welcome message
       setTimeout(() => {
-        dealInitialCards();
-        setGamePhase("BETTING");
-        setHasAutoDealt(true);
+        // Make sure we're using the correct dealer name from the dealer object
+        console.log('Current dealer:', dealer);
+        const dealerName = dealer?.name || 'Dealer';
+        const welcomeMessageText = `Ah, daar ben je. Welkom aan mijn tafel! Ik ben ${dealerName}. Ik heb het gevoel dat het geluk vanavond aan jouw kant staat. Laten we beginnen.`;
+        addChatMessage(welcomeMessageText, 'dealer');
         
-        // Welcome message after cards are dealt
+        // After welcome message, comment on the player's hand with a reasonable delay
         setTimeout(() => {
-          const welcomeMessageText = `Ah, daar ben je. Welkom aan mijn tafel! Ik ben ${dealer.name}. Ik heb het gevoel dat het geluk vanavond aan jouw kant staat. Laten we beginnen.`;
-          replaceThinkingWithMessage(thinkingId, welcomeMessageText);
-        }, 800); // Short delay after cards are visible
-        
-      }, 2800); // Longer delay to show thinking while cards are being prepared
+          // Get the card names for a more descriptive message
+          const card1 = initialPlayerHand[0].value;
+          const card2 = initialPlayerHand[1].value;
+          const dealerVisibleCard = dealerCard1.value;
+          
+          // Create a detailed comment about the cards
+          let handComment = `The game has started! You have ${card1} and ${card2} for a total of ${initialPlayerScore}, I have ${dealerVisibleCard} showing. What's your move?`;
+          
+          // Ensure this message is sent as dealer, not user
+          addChatMessage(handComment, 'dealer');
+        }, 2000); // Longer delay after welcome message for better flow
+      }, 2000); // Delay before welcome message
     }
-  }, [dealer, hasAutoDealt, chatMessages.length]);
+  }, [dealer, hasAutoDealt]);
 
   // Scroll chat messages: to bottom, and hide the first if >= 4 messages
   useEffect(() => {
@@ -252,14 +308,17 @@ const GamePage = () => {
       const actualPlayerScore = currentScoreOverride !== undefined 
         ? currentScoreOverride 
         : calculateScore(playerHand);
-      contexts.push(`Player's score: ${actualPlayerScore}`);
+      contexts.push(`CURRENT SCORES - Player: ${actualPlayerScore}`);
       contexts.push(`Player's cards: ${playerHand.map(card => `${card.rank}${card.suit}`).join(', ')}`);
     }
     
     if (dealerHand.length > 0) {
       const visibleDealerCards = dealerHand.filter(card => !card.isFaceDown);
       if (visibleDealerCards.length > 0) {
+        const visibleDealerScore = calculateScore(visibleDealerCards);
+        contexts.push(`CURRENT SCORES - Dealer: ${visibleDealerScore}`);
         contexts.push(`My visible cards: ${visibleDealerCards.map(card => `${card.rank}${card.suit}`).join(', ')}`);
+        
         if (gamePhase === "GAME_OVER" || gamePhase === "DEALER_TURN") {
           // Ook dealer score herberekenen als nodig
           const actualDealerScore = calculateScore(dealerHand.filter(card => !card.isFaceDown));
@@ -285,17 +344,25 @@ const GamePage = () => {
     setIsLoadingAIResponse(true); // Set loading state
     
     // Add thinking indicator
-    const thinkingId = addThinkingIndicator();
+    const thinkingId = addChatMessage("", 'dealer');
     
     try {
       const gameContext = getGameStatusContext(updatedScoreForContext);
-      const chatHistory = chatMessages.slice(-6).map(msg => ({
-        role: msg.sender === 'player' ? 'user' : 'assistant',
-        content: msg.text
-      }));
-
-             // Use backend API for AI chat
       
+      // Get current messages from the chat store instead of local state
+      const { messages, sendMessage } = useChatStore.getState();
+      const currentOutfitStage = playerData?.dealerProgress?.[dealerId || '']?.currentOutfitStageIndex || 0;
+      
+      // Send message using the chat store
+      await sendMessage(prompt, messages, currentOutfitStage, dealer);
+      
+      // Remove the thinking indicator
+      addChatMessage(prompt, 'dealer');
+      setIsLoadingAIResponse(false);
+      return;
+
+      // This code is now bypassed as we're using the chat store
+      // Keeping for reference
       const personality_prompts = [
         // Stage 0: Sophisticated & Sweet
         "Ik ben {dealerName}, uw dealer voor vanavond. Ik spreek vanuit de 'ik'-vorm, en mijn stijl is professioneel met een vleugje charme. Ik geef scherpe, inzichtelijke tips, maar mijn hoofddoel is om u te zien glimlachen. Ik ben nieuwsgierig naar uw strategie. Mijn antwoorden zijn beknopt, onder de 20 woorden.",
@@ -313,6 +380,12 @@ const GamePage = () => {
 
       const selectedPrompt = personality_prompts[currentOutfitStage] || personality_prompts[0];
       const systemPrompt = selectedPrompt.replace("{dealerName}", dealer?.name || "Dealer");
+      
+      // Create chat history from messages
+      const chatHistory = messages.slice(-8).map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'assistant',
+        content: msg.text
+      }));
 
       // Add game phase context to avoid inappropriate betting advice
       const gamePhaseContext = gamePhase === "CARDS_DEALT"
@@ -325,7 +398,7 @@ const GamePage = () => {
         ? "The dealer is playing. No betting changes possible. Focus on the dealer's actions."
         : "The round is complete. No betting changes possible now. Focus on the outcome and next round.";
 
-      const messages = [
+      const apiMessages = [
         { role: "system", content: systemPrompt + ` IMPORTANT: Keep responses under 15 words maximum. ${gamePhaseContext}. Please observe the language used by the player in the chat history. Respond to the current game event in that language. If the player's language is unclear from the history or if there's no relevant history, default to English.` },
         ...chatHistory,
         { role: "user", content: `${prompt} Current game context: ${gameContext}` }
@@ -334,7 +407,7 @@ const GamePage = () => {
       // Wait longer to show thinking animation - more realistic
       await new Promise(resolve => setTimeout(resolve, 1800 + Math.random() * 1200));
 
-      const response = await fetch('/api/ai-chat/send-message', {
+      const response = await fetch(`${API_URL}/api/ai-chat/chat/send-message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -348,15 +421,16 @@ const GamePage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        replaceThinkingWithMessage(thinkingId, data.reply);
+        addChatMessage(data.reply, 'dealer');
       } else {
-        replaceThinkingWithMessage(thinkingId, "Hmm, let me think... 🤔");
+        // Just log the error and don't show an error message
+        console.error("AI chat API error:", await response.text());
       }
     } catch (error) {
-      console.error("Failed to send AI game update:", error);
-      replaceThinkingWithMessage(thinkingId, "Let's keep playing! 🎰");
-    } finally {
-      setIsLoadingAIResponse(false); // Reset loading state
+      console.error("Failed to send message:", error);
+      
+      // Just log the error and don't show an error message
+      setIsLoadingAIResponse(false);
     }
   };
 
@@ -416,9 +490,9 @@ const GamePage = () => {
     // Start de player's turn na het uitdelen van kaarten
     setGamePhase("PLAYER_TURN");
     
-    // Send AI notification 
+    // Send AI notification with current scores
     setTimeout(() => {
-      sendAIGameUpdate("The game has started! The player now needs to decide whether to hit or stand.", playerScore);
+      sendAIGameUpdate(`The game has started! You have ${playerScore}, I have ${dealerScore}. What's your move?`, playerScore);
     }, 1000);
   };
 
@@ -524,99 +598,22 @@ const GamePage = () => {
   const sendChatMessage = async () => {
     if (!chatInput.trim() || isLoadingAIResponse) return;
     
-    const newMessage = {
-      id: Date.now().toString(),
-      text: chatInput,
-      sender: 'player' as const,
-      timestamp: new Date()
-    };
+    // Use the chat store to send the message
+    // Use the chat store to send the message
+    const { sendMessage } = useChatStore.getState();
+    const currentOutfitStage = playerData?.dealerProgress?.[dealerId || '']?.currentOutfitStageIndex || 0;
     
-    // Add player message and keep only last 3 messages (instead of 4)
-    setChatMessages(prev => {
-      const newMessages = [...prev, newMessage];
-      return newMessages.slice(-4);
-    });
+    // Get game context to add to the message
+    const gameContext = getGameStatusContext();
+    const messageWithContext = chatInput + ` (Game context: ${gameContext})`;
     
-    const userInput = chatInput;
+    // Send the message using the chat store
+    sendMessage(messageWithContext, chatMessages, currentOutfitStage, dealer, 'user_typed');
+    
+    // Clear the input
     setChatInput("");
+  };  
 
-    // Add a short delay before showing thinking indicator
-    await new Promise(resolve => setTimeout(resolve, 750)); 
-
-    setIsLoadingAIResponse(true);
-    
-    // Add thinking indicator
-    const thinkingId = addThinkingIndicator();
-    
-    try {
-      const gameContext = getGameStatusContext();
-      const chatHistory = chatMessages.slice(-8).map(msg => ({
-        role: msg.sender === 'player' ? 'user' : 'assistant',
-        content: msg.text
-      }));
-
-      // Use OpenAI API directly
-      const openaiApiKey = process.env.REACT_APP_OPENAI_API_KEY;
-      
-      const personality_prompts = [
-        "I am Emma, your sophisticated blackjack dealer with natural charm. I'm warm, professional, and subtly playful. I use gentle flirtation and encouragement. Keep responses under 12 words.",
-        "I am Emma wearing elegant cocktail attire. I'm charming, witty, and slightly more intimate. I compliment your decisions and create romantic tension. Keep responses under 12 words.",
-        "I am Emma in casual but stylish wear. I'm approachable, fun, and flirtatiously encouraging. I tease playfully about your luck and skills. Keep responses under 12 words.",
-        "I am Emma in sporty, confident attire. I'm energetic, bold, and confidently flirty. I celebrate your wins with enthusiasm and motivate you during losses. Keep responses under 12 words.",
-        "I am Emma in stunning poolside attire. I'm confident, alluring, and playfully seductive. I use sultry compliments and create anticipation. Keep responses under 12 words.",
-        "I am Emma in luxurious, captivating attire. I'm sophisticated, mysterious, and irresistibly charming. I whisper sweet encouragements and sultry observations. Keep responses under 12 words."
-      ];
-
-      const selectedPrompt = personality_prompts[currentOutfitStage] || personality_prompts[0];
-      const systemPrompt = selectedPrompt.replace("Emma", dealer?.name || "Dealer");
-
-      // Add game phase context to avoid inappropriate betting advice
-      const gamePhaseContext = gamePhase === "CARDS_DEALT"
-        ? "Cards are being dealt automatically. Comment on the anticipation and excitement."
-        : gamePhase === "BETTING" 
-        ? "The player has cards and can now place their bet. You can suggest betting strategies based on their hand."
-        : gamePhase === "PLAYER_TURN"
-        ? "The player is deciding whether to hit or stand. No betting changes possible now. Focus on the current hand."
-        : gamePhase === "DEALER_TURN" 
-        ? "The dealer is playing. No betting changes possible. Focus on the dealer's actions."
-        : "The round is complete. No betting changes possible now. Focus on the outcome and next round.";
-
-      const messages = [
-        { role: "system", content: systemPrompt + ` IMPORTANT: Keep responses under 15 words maximum. ${gamePhaseContext}. Please detect the language of the user's input and respond in the same language. If the language is unclear, default to English.` },
-        ...chatHistory,
-        { role: "user", content: `${userInput} (Game context: ${gameContext})` }
-      ];
-
-      // Wait longer to show thinking animation - more realistic for chat
-      await new Promise(resolve => setTimeout(resolve, 2200 + Math.random() * 1300));
-
-      const response = await fetch(`${__API_URL__}/api/ai-chat/send-message`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userInput + ` (Game context: ${gameContext})`,
-          history: chatHistory,
-          outfit_stage_index: currentOutfitStage
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        replaceThinkingWithMessage(thinkingId, data.reply);
-      } else {
-        replaceThinkingWithMessage(thinkingId, "Sorry, let me try again! 😊");
-      }
-    } catch (error) {
-      console.error("Failed to send message or get reply:", error);
-      replaceThinkingWithMessage(thinkingId, "Oops! Let's keep playing 🎰");
-    } finally {
-      setIsLoadingAIResponse(false);
-    }
-  };
-
-  // Add a delayed AI response about the outfit change
   const handleOutfitChange = async (newStage: number) => {
     // Check if outfit is unlocked
     if (!unlockedOutfits.includes(newStage)) {
@@ -644,17 +641,7 @@ const GamePage = () => {
       
       // Add a delayed AI response about the outfit change
       setTimeout(() => {
-        const aiMessage = {
-          id: Date.now().toString(),
-          text: randomComment,
-          sender: 'dealer' as const,
-          timestamp: new Date()
-        };
-        
-        setChatMessages(prev => {
-          const newMessages = [...prev, aiMessage];
-          return newMessages.slice(-4); // Keep only last 4 messages
-        });
+        addChatMessage(randomComment, 'dealer');
       }, 1000); // 1 second delay to feel natural
     }
   };
@@ -681,10 +668,7 @@ const GamePage = () => {
     setPendingUnlockStage(null);
 
     // Optional: send a confirmation message
-    addChatMessage(
-      `Congratulations! You've unlocked the '${stageToUnlock.stageName}' outfit. You can now select it.`,
-      'dealer'
-    );
+    addChatMessage(`Congratulations! You've unlocked the '${stageToUnlock.stageName}' outfit. You can now select it.`, 'dealer');
   };
 
   // Auto-progress outfit on win
@@ -754,7 +738,7 @@ const GamePage = () => {
     }
     
     if (helpMessage) {
-      useConversationStarter(helpMessage);
+      addChatMessage(helpMessage, 'user');
     }
   };
 
@@ -801,18 +785,12 @@ const GamePage = () => {
     setShowStartersPopup(false);
     
     // Create and send the message directly
-    const newMessage = {
-      id: Date.now().toString(),
-      text: starter,
-      sender: 'player' as const,
-      timestamp: new Date()
-    };
+    // Use the chat store to send the message
+    const { sendMessage } = useChatStore.getState();
+    const currentOutfitStage = playerData?.dealerProgress?.[dealerId || '']?.currentOutfitStageIndex || 0;
     
-    // Add player message and keep only last 4 messages
-    setChatMessages(prev => {
-      const newMessages = [...prev, newMessage];
-      return newMessages.slice(-4);
-    });
+    // Send the message using the chat store
+    sendMessage(starter, chatMessages, currentOutfitStage, dealer, 'conversation_starter');
     
     // Add a short delay before showing thinking indicator
     await new Promise(resolve => setTimeout(resolve, 750));
@@ -820,12 +798,12 @@ const GamePage = () => {
     setIsLoadingAIResponse(true);
     
     // Add thinking indicator
-    const thinkingId = addThinkingIndicator();
+    const thinkingId = addChatMessage("", 'dealer');
     
     try {
       const gameContext = getGameStatusContext();
       const chatHistory = chatMessages.slice(-8).map(msg => ({
-        role: msg.sender === 'player' ? 'user' : 'assistant',
+        role: msg.sender === 'user' ? 'user' : 'assistant',
         content: msg.text
       }));
 
@@ -864,7 +842,7 @@ const GamePage = () => {
       // Wait longer to show thinking animation - more realistic for conversation starters
       await new Promise(resolve => setTimeout(resolve, 2400 + Math.random() * 1400));
 
-      const response = await fetch('/api/ai-chat/send-message', {
+      const response = await fetch(`${API_URL}/api/ai-chat/chat/send-message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -878,13 +856,15 @@ const GamePage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        replaceThinkingWithMessage(thinkingId, data.reply);
+        addChatMessage(data.reply, 'dealer');
       } else {
-        replaceThinkingWithMessage(thinkingId, "Sorry, let me try again! 😊");
+        // Instead of showing an error message, just log the error and continue
+        console.error("AI chat API error:", await response.text());
+        // Don't add any error message to the chat
       }
     } catch (error) {
       console.error("Failed to send conversation starter:", error);
-      replaceThinkingWithMessage(thinkingId, "Oops! Let's keep playing 🎰");
+      // Don't show error message to the user
     } finally {
       setIsLoadingAIResponse(false);
     }
@@ -894,37 +874,14 @@ const GamePage = () => {
 
   // Helper function to add thinking indicator
   const addThinkingIndicator = () => {
-    const thinkingMessage = {
-      id: `thinking-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Meer unieke ID
-      text: "",
-      sender: 'thinking' as const,
-      timestamp: new Date()
-    };
-    
-    // Verwijder eerst alle bestaande thinking messages om duplicates te voorkomen
-    setChatMessages(prev => {
-      const filteredMessages = prev.filter(msg => !msg.id.startsWith('thinking-'));
-      return [...filteredMessages, thinkingMessage];
-    });
-    
-    return thinkingMessage.id;
+    const thinkingId = Date.now().toString();
+    addChatMessage("", 'dealer');
+    return thinkingId;
   };
 
   // Helper function to remove thinking indicator and add real message
   const replaceThinkingWithMessage = (thinkingId: string, messageText: string) => {
-    const realMessage = {
-      id: `dealer-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Meer unieke ID
-      text: messageText,
-      sender: 'dealer' as const,
-      timestamp: new Date()
-    };
-    
-    setChatMessages(prev => {
-      const filteredMessages = prev.filter(msg => msg.id !== thinkingId);
-      const newMessages = [...filteredMessages, realMessage];
-      // Keep only last 4 messages to prevent scroll
-      return newMessages.slice(-4);
-    });
+    addChatMessage(messageText, 'dealer');
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -971,7 +928,7 @@ const GamePage = () => {
   }
 
   return (
-    <div className="min-h-screen text-white relative bg-slate-900">
+    <div className="min-h-screen text-white relative bg-slate-900 overflow-y-auto">
       
       {/* Enhanced Header with Logo, User Dropdown & Wallet */}
       <AppHeader 
@@ -1108,10 +1065,10 @@ const GamePage = () => {
             {/* Casino Pattern Image - Direct gebruik van de pattern */}
             <div 
               className="absolute inset-0 opacity-[0.35]"
-          style={{
+              style={{
                 backgroundImage: 'url(/casino-pattern.png)',
                 backgroundSize: '300px 300px',
-            backgroundRepeat: 'repeat',
+                backgroundRepeat: 'repeat',
                 backgroundBlendMode: 'overlay'
               }}
             ></div>
@@ -1496,7 +1453,9 @@ const GamePage = () => {
             }}
           >
             {chatMessages.map((msg) => {
-              if (msg.sender === 'thinking') {
+              const isPlayer = msg.sender === 'user';
+              const isThinking = msg.isAction;
+              if (isThinking) {
                 return (
                   <div key={msg.id} className="flex justify-start w-full mb-3"> 
                     <div className="max-w-[85%] md:max-w-[90%] group flex items-center gap-3">
@@ -1513,11 +1472,11 @@ const GamePage = () => {
               return (
                 <div
                   key={msg.id}
-                  className={`flex mb-3 ${msg.sender === 'player' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex mb-3 ${isPlayer ? 'justify-end' : 'justify-start'}`}
                 >
-                  <div className={`max-w-[85%] sm:max-w-[90%] md:max-w-[95%] group ${msg.sender === 'player' ? 'flex-row-reverse' : 'flex-row'} flex items-end gap-2 sm:gap-3`}>
+                  <div className={`max-w-[85%] sm:max-w-[90%] md:max-w-[95%] group ${isPlayer ? 'flex-row-reverse' : 'flex-row'} flex items-end gap-2 sm:gap-3`}>
                     {/* Avatar/Icon */}
-                    {msg.sender === 'player' ? (
+                    {isPlayer ? (
                       <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm sm:text-base shadow-lg border-2 bg-gradient-to-br from-emerald-500 to-green-600 text-white border-emerald-300/50">
                         🎰
                       </div>
@@ -1527,12 +1486,12 @@ const GamePage = () => {
                     
                     {/* Message Bubble */}
                     <div className={`relative max-w-[calc(100%-3rem)] sm:max-w-[calc(100%-4rem)] ${
-                      msg.sender === 'player' ? 'mr-1 sm:mr-2' : 'ml-1 sm:ml-2'
+                      isPlayer ? 'mr-1 sm:mr-2' : 'ml-1 sm:ml-2'
                     }`}>
                       {/* Main bubble */}
                       <div 
                         className={`p-3 sm:p-4 backdrop-blur-xl rounded-2xl shadow-xl transition-all duration-300 group-hover:shadow-2xl border relative overflow-hidden ${
-                          msg.sender === 'player'
+                          isPlayer
                             ? 'bg-gradient-to-br from-emerald-600/90 via-green-600/85 to-emerald-700/90 text-white border-emerald-400/50 rounded-br-md shadow-emerald-500/20 group-hover:shadow-emerald-400/30'
                             : 'bg-gradient-to-br from-amber-600/90 via-yellow-600/85 to-amber-700/90 text-white border-amber-400/50 rounded-bl-md shadow-amber-500/20 group-hover:shadow-amber-400/30'
                         }`}
@@ -1544,10 +1503,10 @@ const GamePage = () => {
                         <div className="relative z-10">
                           <p className="text-sm sm:text-base leading-relaxed font-medium mb-1">{msg.text}</p>
                           <div className={`flex items-center gap-1 text-xs sm:text-sm opacity-80 ${
-                            msg.sender === 'player' ? 'justify-end' : 'justify-start'
+                            isPlayer ? 'justify-end' : 'justify-start'
                           }`}>
                             <span className="bg-black/20 px-2 py-0.5 rounded-full backdrop-blur-sm">
-                              {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              {isPlayer ? (currentUser?.displayName || 'Player') : (dealer?.name || 'Dealer')} • {formatTimestamp(msg.timestamp)}
                             </span>
                           </div>
                         </div>

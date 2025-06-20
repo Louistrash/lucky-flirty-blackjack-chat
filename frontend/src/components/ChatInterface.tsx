@@ -1,20 +1,15 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { AiChatRequest, ChatMessageInput as BrainChatMessageInput } from 'types'; // Adjust path if brain types are elsewhere
 import { useCurrentUser } from 'app';
 import { usePlayerProgressStore } from '../utils/usePlayerProgressStore';
+import { useChatStore, Message } from '../utils/useChatStore';
+import { DealerData } from '../utils/adminDealerManager';
+import { formatTimestamp } from '../utils/helpers';
 
-interface Message {
-  id: string;
-  text: string;
-  sender: 'player' | 'dealer';
-  timestamp: Date;
-  dealerName?: string; // Optional: for dealer's name
-  // dealerAvatar?: string; // Optional: for dealer's avatar URL
-}
+// Using Message from useChatStore instead of defining it here
 
 interface ChatInterfaceProps {
-  // We might pass down the current dealer's info later
-  // dealerProfile?: Dealer; // Assuming Dealer type is defined elsewhere
+  dealer: DealerData | null;
+  currentOutfitStage: number;
 }
 
 // Touch/Swipe interface for message interactions
@@ -51,32 +46,27 @@ const getSwipeDirection = (start: TouchPosition, end: TouchPosition): 'left' | '
   return null;
 };
 
-const ChatInterface: React.FC<ChatInterfaceProps> = (/* { dealerProfile } */) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ dealer, currentOutfitStage }) => {
+  const { messages, isLoadingApiCall, thinkingText, sendMessage } = useChatStore();
   const [inputValue, setInputValue] = useState('');
-  const [isLoadingApiCall, setIsLoadingApiCall] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [swipeState, setSwipeState] = useState<SwipeState>({
     isDragging: false,
     startPos: null,
     messageId: null,
     direction: null
   });
-  const messagesEndRef = useRef<null | HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-
   const { user: currentUser } = useCurrentUser();
   const {
     playerData,
     subscribeToPlayerProgress,
   } = usePlayerProgressStore();
 
-  // Hardcoded for now, this would come from GamePage or global state
-  const selectedDealerId = "dealer1_sophia"; 
-
   useEffect(() => {
     if (currentUser?.uid) {
       const unsubscribe = subscribeToPlayerProgress(currentUser.uid);
-      return () => unsubscribe();
+      return unsubscribe;
     }
   }, [currentUser, subscribeToPlayerProgress]);
 
@@ -148,75 +138,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = (/* { dealerProfile } */) =>
   }, [swipeState]);
 
   const handleSendMessage = () => {
-    if (inputValue.trim() === '') return;
-
-    const newMessage: Message = {
-      id: new Date().toISOString(), // Simple ID for now
-      text: inputValue,
-      sender: 'player',
-      timestamp: new Date(),
-    };
-    setMessages(prevMessages => [...prevMessages, newMessage]);
+    if (inputValue.trim() === '' || isLoadingApiCall) return;
+    
+    sendMessage(inputValue, messages, currentOutfitStage, dealer);
     setInputValue('');
-    setIsLoadingApiCall(true);
-
+    
     // Add haptic feedback for sending
     if ('vibrate' in navigator) {
       navigator.vibrate(5);
     }
-
-    // Prepare history for API
-    const historyForApi: BrainChatMessageInput[] = messages.map(msg => ({
-      role: msg.sender === 'player' ? 'user' : 'assistant',
-      content: msg.text,
-    }));
-
-    let currentOutfitStage = 0; // Default to professional
-    if (currentUser && playerData && playerData.dealerProgress && playerData.dealerProgress[selectedDealerId]) {
-      currentOutfitStage = playerData.dealerProgress[selectedDealerId].currentOutfitStageIndex;
-    }
-
-    const requestBody: AiChatRequest = {
-      message: newMessage.text,
-      history: historyForApi, // Send messages *before* the current one
-      outfit_stage_index: currentOutfitStage,
-    };
-
-    fetch('/api/ai-chat/send-message', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody)
-    })
-      .then(async response => {
-        if (!response.ok) {
-          throw new Error(`API Error: ${response.status}`);
-        }
-        const data = await response.json();
-        const dealerResponse: Message = {
-          id: new Date().toISOString() + '-dealer',
-          text: data.reply, 
-          sender: 'dealer',
-          timestamp: new Date(),
-          dealerName: 'Royal AI Dealer', // Consistent with backend prompt for now
-        };
-        setMessages(prevMessages => [...prevMessages, dealerResponse]);
-      })
-      .catch(error => {
-        console.error("Failed to send message or get reply:", error);
-        const errorResponse: Message = {
-          id: new Date().toISOString() + '-error',
-          text: "Sorry, I couldn't get a response. Please try again.",
-          sender: 'dealer',
-          timestamp: new Date(),
-          dealerName: 'System',
-        };
-        setMessages(prevMessages => [...prevMessages, errorResponse]);
-      })
-      .finally(() => {
-        setIsLoadingApiCall(false);
-      });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -239,44 +169,55 @@ const ChatInterface: React.FC<ChatInterfaceProps> = (/* { dealerProfile } */) =>
       </div>
 
       {/* Messages Area */}
-      <div className="flex-grow p-3 sm:p-4 overflow-y-auto space-y-3 sm:space-y-4 bg-gray-800/50 relative">
-        {isLoadingApiCall && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-10">
-            <div className="flex items-center space-x-2">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-yellow-400"></div>
-              <p className='text-yellow-400 text-base sm:text-lg font-semibold'>Dealer is thinking...</p>
-            </div>
-          </div>
-        )}
-        {messages.map((msg) => (
+      <div 
+        className="flex-1 overflow-y-auto p-4 space-y-4"
+      >
+        {/* Only show the last 3 messages */}
+        {messages.slice(-3).map((message) => (
           <div
-            key={msg.id}
-            className={`flex ${msg.sender === 'player' ? 'justify-end' : 'justify-start'}`}
+            key={message.id}
+            className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+            onTouchStart={(e) => handleMessageTouchStart(e.nativeEvent, message.id)}
+            onTouchMove={(e) => handleMessageTouchMove(e.nativeEvent)}
+            onTouchEnd={handleMessageTouchEnd}
+            onMouseDown={(e) => handleMessageTouchStart(e.nativeEvent, message.id)}
+            onMouseMove={(e) => handleMessageTouchMove(e.nativeEvent)}
+            onMouseUp={handleMessageTouchEnd}
+            onMouseLeave={handleMessageTouchEnd}
           >
             <div
-              className={`max-w-[85%] sm:max-w-[80%] p-3 sm:p-3 rounded-lg shadow transition-all duration-200 touch-manipulation ${
-                msg.sender === 'player'
-                  ? 'bg-blue-600 text-white rounded-br-none hover:bg-blue-700'
-                  : 'bg-gray-700 text-gray-200 rounded-bl-none hover:bg-gray-600'
-              } ${swipeState.messageId === msg.id && swipeState.isDragging ? 'scale-95' : ''}`}
-              onTouchStart={(e) => handleMessageTouchStart(e.nativeEvent, msg.id)}
-              onTouchMove={(e) => handleMessageTouchMove(e.nativeEvent)}
-              onTouchEnd={handleMessageTouchEnd}
-              onMouseDown={(e) => handleMessageTouchStart(e.nativeEvent, msg.id)}
-              onMouseMove={(e) => handleMessageTouchMove(e.nativeEvent)}
-              onMouseUp={handleMessageTouchEnd}
-              onMouseLeave={handleMessageTouchEnd}
+              className={`relative max-w-[80%] rounded-lg px-4 py-2 ${message.sender === 'user' 
+                ? 'bg-blue-600 text-white rounded-br-none' 
+                : 'bg-gray-700 text-white rounded-bl-none'}`}
+              style={{
+                transform: swipeState.isDragging && swipeState.messageId === message.id 
+                  ? `translateX(${swipeState.direction === 'left' ? '-40px' : '40px'})` 
+                  : 'translateX(0)',
+                transition: swipeState.isDragging ? 'none' : 'transform 0.2s ease-out'
+              }}
             >
-              {msg.sender === 'dealer' && (
-                <p className="text-xs text-yellow-300 mb-1">{msg.dealerName || 'Dealer'}</p>
-              )}
-              <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.text}</p>
-              <p className={`text-xs mt-2 ${msg.sender === 'player' ? 'text-blue-200' : 'text-gray-400'} text-right`}>
-                {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-              </p>
+              <p className="text-sm sm:text-base">{message.text}</p>
+              <div className="text-[10px] text-gray-400 mt-1 text-right">
+                {message.sender === 'user' ? '' : dealer?.name || 'Dealer'} {formatTimestamp(message.timestamp)}
+              </div>
             </div>
           </div>
         ))}
+        
+        {/* Thinking indicator */}
+        {isLoadingApiCall && (
+          <div className="flex justify-start p-4">
+            <div className="bg-gray-700 text-white rounded-lg px-4 py-2 rounded-bl-none max-w-[80%]">
+              <div className="flex items-center space-x-2 mb-2">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              </div>
+              <p className="text-sm italic text-gray-400">{thinkingText}</p>
+            </div>
+          </div>
+        )}
+        
         <div ref={messagesEndRef} />
       </div>
 

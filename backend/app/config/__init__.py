@@ -33,11 +33,19 @@ def setup_firebase_credentials():
         print(f"🔑 Firebase service account (OLD) path set: {old_service_account_path}")
         return True
     
+    # Check for the actual existing file
+    actual_service_account_path = current_dir / "flirty-chat-a045e-firebase-adminsdk-fbsvc-65d0336c91.json"
+    if actual_service_account_path.exists():
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = str(actual_service_account_path)
+        print(f"🔑 Firebase service account (ACTUAL) path set: {actual_service_account_path}")
+        return True
+    
     print("❌ No Firebase service account file found")
     print(f"Searched locations:")
     print(f"  - {new_service_account_path}")
     print(f"  - {root_path}")
     print(f"  - {old_service_account_path}")
+    print(f"  - {actual_service_account_path}")
     return False
 
 # Setup credentials and initialize Firebase immediately when module is imported

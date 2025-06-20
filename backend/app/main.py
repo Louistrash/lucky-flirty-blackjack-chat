@@ -7,13 +7,23 @@ import asyncio
 import os
 from typing import Dict, List, Optional
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Stripe imports
 import sys
 sys.path.append('..')
 from stripe_service import stripe_service, PackageType
 
+# Import AI chat router
+from app.apis.ai_chat.router import router as ai_chat_router
+
 app = FastAPI(title="Lucky Flirty Chat API")
+
+# Include AI chat router
+app.include_router(ai_chat_router, prefix="/api/ai-chat")
 
 # CORS configuratie
 app.add_middleware(
@@ -25,8 +35,28 @@ app.add_middleware(
 )
 
 # Firebase initialisatie
-cred = credentials.Certificate("../flirty-chat-a045e-firebase-adminsdk-fbsvc-aa481051b6.json")
-firebase_admin.initialize_app(cred)
+# Try to find the correct Firebase credentials file
+import pathlib
+backend_dir = pathlib.Path(__file__).parent.parent
+firebase_files = [
+    "flirty-chat-a045e-firebase-adminsdk-fbsvc-65d0336c91.json",
+    "flirty-chat-a045e-firebase-adminsdk-fbsvc-aa481051b6.json", 
+    "flirty-chat-a045e-firebase-adminsdk-fbsvc-ecac652d0a.json"
+]
+
+firebase_cred_path = None
+for filename in firebase_files:
+    potential_path = backend_dir / filename
+    if potential_path.exists():
+        firebase_cred_path = str(potential_path)
+        break
+
+if firebase_cred_path:
+    cred = credentials.Certificate(firebase_cred_path)
+    firebase_admin.initialize_app(cred)
+    print(f"🔥 Firebase initialized with: {firebase_cred_path}")
+else:
+    print("❌ No Firebase credentials file found")
 db = firestore.client()
 
 # Pydantic models voor Stripe
@@ -122,7 +152,7 @@ async def create_checkout_session(request: CreateCheckoutRequest):
                 print(f"Could not get user email: {e}")
         
         # Maak checkout sessie aan
-        result = stripe_service.create_checkout_session(
+        session = stripe_service.create_checkout_session(
             package_id=request.package_id,
             package_type=package_type,
             success_url=request.success_url,
@@ -131,13 +161,10 @@ async def create_checkout_session(request: CreateCheckoutRequest):
             user_id=request.user_id
         )
         
-        if result["success"]:
-            return {
-                "checkout_url": result["checkout_url"],
-                "session_id": result["session_id"]
-            }
-        else:
-            raise HTTPException(status_code=400, detail=result["error"])
+        return {
+            "checkout_url": session.url,
+            "session_id": session.id
+        }
             
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -245,4 +272,4 @@ async def setup_stripe_products():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    uvicorn.run(app, host="0.0.0.0", port=8000)
