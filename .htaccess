@@ -1,0 +1,16 @@
+RewriteEngine On
+
+# API Reverse Proxy - doorsturen naar backend op poort 8000
+RewriteCond %{REQUEST_URI} ^/api/(.*)$
+RewriteRule ^api/(.*)$ http://127.0.0.1:8000/api/$1 [P,L]
+
+# CORS headers voor API requests
+Header always set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+
+# Zorg ervoor dat alle andere requests naar de frontend gaan
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/api/
+RewriteRule ^(.*)$ /index.html [L] 

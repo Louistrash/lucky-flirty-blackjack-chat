@@ -1,0 +1,24 @@
+# Workspace version: 1.44.34
+# Backend dependencies for Lucky Flirty Chat
+fastapi==0.111.0
+python-multipart==0.0.9
+uvicorn[standard]==0.29.0
+
+# Environment variables
+python-dotenv
+
+# AI Chat
+openai
+
+# Web scraping and data processing
+beautifulsoup4
+requests
+
+# Firebase
+firebase-admin
+
+# File handling
+aiofiles
+
+# Payment processing
+stripe

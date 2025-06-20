@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lucky Flirty Chat - Betaling</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .packages-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .package-card {
+            border: 2px solid #f0f0f0;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .package-card:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(102, 126, 234, 0.2);
+        }
+        
+        .package-card.popular {
+            border-color: #ff6b6b;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 100%);
+            color: white;
+        }
+        
+        .coin-amount {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+        }
+        
+        .popular .coin-amount {
+            color: white;
+        }
+        
+        .price {
+            font-size: 2em;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0;
+        }
+        
+        .popular .price {
+            color: white;
+        }
+        
+        .buy-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .buy-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Lucky Flirty Chat - Payment Demo</h1>
+            <p>Test je Stripe integratie met echte checkout URLs!</p>
+        </div>
+        
+        <div class="packages-grid">
+            <!-- Starter Pack -->
+            <div class="package-card">
+                <h3>Starter Pack</h3>
+                <div class="coin-amount">500 💎</div>
+                <div class="price">€5,00</div>
+                <button class="buy-button" onclick="redirectToCheckout('starter')">
+                    Test Checkout
+                </button>
+            </div>
+            
+            <!-- Popular Choice -->
+            <div class="package-card popular">
+                <h3>Popular Choice</h3>
+                <div class="coin-amount">1.200 💎</div>
+                <div class="price">€10,00</div>
+                <button class="buy-button" onclick="redirectToCheckout('popular')">
+                    Test Checkout
+                </button>
+            </div>
+            
+            <!-- Premium Monthly -->
+            <div class="package-card">
+                <h3>Premium Monthly</h3>
+                <div class="coin-amount">👑</div>
+                <div class="price">€9,99/maand</div>
+                <button class="buy-button" onclick="redirectToCheckout('premium_monthly')">
+                    Test Checkout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Test checkout URLs - vervang met echte URLs van je test script
+        const checkoutUrls = {
+            'starter': 'https://checkout.stripe.com/c/pay/test_session_url_here',
+            'popular': 'https://checkout.stripe.com/c/pay/test_session_url_here', 
+            'premium_monthly': 'https://checkout.stripe.com/c/pay/test_session_url_here'
+        };
+        
+        function redirectToCheckout(packageId) {
+            // Voor demo doeleinden - normaal zou je een API call maken
+            alert(`Zou normaal redirecten naar Stripe Checkout voor ${packageId}`);
+            
+            // In productie:
+            // window.location.href = checkoutUrls[packageId];
+        }
+    </script>
+</body>
+</html> 
