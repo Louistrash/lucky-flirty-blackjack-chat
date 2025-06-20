@@ -1,0 +1,86 @@
+{
+  "general": {
+    "appName": "Lucky Flirty Chat",
+    "play": "SPELEN",
+    "loading": "Laden...",
+    "error": "Fout",
+    "success": "Succes",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "create": "Aanmaken",
+    "edit": "Bewerken",
+    "delete": "Verwijderen",
+    "back": "Terug",
+    "next": "Volgende"
+  },
+  "header": {
+    "home": "Home",
+    "dealerManagement": "Dealer Beheer",
+    "admin": "Beheerder",
+    "logout": "Uitloggen",
+    "login": "Inloggen",
+    "language": "Taal",
+    "myAccount": "Mijn Account",
+    "profile": "Profiel",
+    "tokenShop": "Token Winkel",
+    "settings": "Instellingen"
+  },
+  "home": {
+    "chooseDealer": "Kies Je Dealer",
+    "dealerDescription": "Elke dealer heeft een unieke stijl en expertise.",
+    "experienceText": "jaar ervaring",
+    "professionalText": "Professional",
+    "dealerChat": "Live chatten met de dealer",
+    "carousel": {
+      "subtitle": "Ervaar de spanning van authentiek blackjack met onze professionele live dealers.",
+      "dealerUnique": "Elke dealer biedt een unieke ervaring."
+    }
+  },
+  "dealerManagement": {
+    "title": "Dealer Beheer",
+    "addDealer": "Nieuwe Dealer Toevoegen",
+    "editDealer": "Dealer Bewerken",
+    "carouselTitle": "Homepage Carousel (17 Slots)",
+    "carouselDescription": "Deze 17 dealers worden getoond op de hoofdpagina. Klik \"Bewerk\" om een dealer aan te passen.",
+    "slotsUsed": "Slots gebruikt",
+    "validations": {
+      "maxDealers": "Homepage carousel kan maximaal 17 dealers bevatten",
+      "alreadyInCarousel": "Deze dealer staat al in de homepage carousel",
+      "notSuitable": "Dealer niet geschikt voor carousel"
+    }
+  },
+  "game": {
+    "hit": "Hit",
+    "stand": "Stand",
+    "double": "Dubbel",
+    "bet": "Inzet",
+    "deal": "Delen",
+    "yourTurn": "Jouw Beurt",
+    "dealerTurn": "Beurt van de Dealer",
+    "youWin": "Je Wint!",
+    "youLose": "Je Verliest!",
+    "tie": "Gelijkspel!",
+    "blackjack": "Blackjack!",
+    "insuranceQuestion": "Verzekering?",
+    "yes": "Ja",
+    "no": "Nee",
+    "bust": "Bust!",
+    "playerScore": "Jouw Score",
+    "dealerScore": "Dealer Score"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "dealersTotal": "Totaal Dealers",
+    "dealersActive": "Actieve Dealers",
+    "dealersInCarousel": "Carousel Dealers",
+    "usersTotal": "Totaal Gebruikers",
+    "refreshTips": {
+      "title": "Ververs Tips",
+      "instruction": "Als dealers niet verschijnen, probeer:",
+      "refreshCarousel": "Ververs de carousel",
+      "refreshDealers": "Ververs dealergegevens",
+      "clearCache": "Wis browsercache",
+      "restart": "Herstart de applicatie"
+    }
+  }
+}

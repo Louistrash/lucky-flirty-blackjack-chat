@@ -1,0 +1,82 @@
+{
+  "general": {
+    "appName": "Lucky Flirty Chat",
+    "play": "PLAY",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "create": "Create",
+    "edit": "Edit",
+    "delete": "Delete",
+    "back": "Back",
+    "next": "Next"
+  },
+  "header": {
+    "home": "Home",
+    "dealerManagement": "Dealer Management",
+    "admin": "Admin",
+    "logout": "Logout",
+    "login": "Login",
+    "language": "Language"
+  },
+  "home": {
+    "chooseDealer": "Choose Your Dealer",
+    "dealerDescription": "Each dealer has a unique style and expertise.",
+    "experienceText": "years experience",
+    "professionalText": "Professional",
+    "dealerChat": "Live chat with the dealer",
+    "carousel": {
+      "subtitle": "Experience the thrill of authentic blackjack with our professional live dealers.",
+      "dealerUnique": "Each dealer offers a unique experience."
+    }
+  },
+  "dealerManagement": {
+    "title": "Dealer Management",
+    "addDealer": "Add New Dealer",
+    "editDealer": "Edit Dealer",
+    "carouselTitle": "Homepage Carousel (17 Slots)",
+    "carouselDescription": "These 17 dealers are shown on the homepage. Click \"Edit\" to modify a dealer.",
+    "slotsUsed": "Slots used",
+    "validations": {
+      "maxDealers": "Homepage carousel can contain a maximum of 17 dealers",
+      "alreadyInCarousel": "This dealer is already in the homepage carousel",
+      "notSuitable": "Dealer not suitable for carousel"
+    }
+  },
+  "game": {
+    "hit": "Hit",
+    "stand": "Stand",
+    "double": "Double",
+    "bet": "Bet",
+    "deal": "Deal",
+    "yourTurn": "Your Turn",
+    "dealerTurn": "Dealer's Turn",
+    "youWin": "You Win!",
+    "youLose": "You Lose!",
+    "tie": "Tie!",
+    "blackjack": "Blackjack!",
+    "insuranceQuestion": "Insurance?",
+    "yes": "Yes",
+    "no": "No",
+    "bust": "Bust!",
+    "playerScore": "Your Score",
+    "dealerScore": "Dealer's Score"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "dealersTotal": "Total Dealers",
+    "dealersActive": "Active Dealers",
+    "dealersInCarousel": "Carousel Dealers",
+    "usersTotal": "Total Users",
+    "refreshTips": {
+      "title": "Refresh Tips",
+      "instruction": "If dealers are not appearing, try:",
+      "refreshCarousel": "Refresh the carousel",
+      "refreshDealers": "Refresh dealer data",
+      "clearCache": "Clear browser cache",
+      "restart": "Restart the application"
+    }
+  }
+}
